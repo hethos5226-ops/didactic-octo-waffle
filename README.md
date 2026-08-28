@@ -29,9 +29,34 @@ produces a static `dist/`.
 Emoji are the app's whole visual language, so `Apple Color Emoji` leads both
 font stacks — standalone glyphs and ones sitting inline in a sentence. On
 iPhone, iPad and Mac that is the real system font and matches Messages exactly.
-Apple's emoji font is proprietary and cannot be bundled, so a Linux or Windows
-dev machine falls through to its own set; that affects screenshots taken during
-development, never the phone this is built for.
+
+Every emoji in the source is a plain Unicode codepoint (`😂` is `U+1F602`
+everywhere). *Which artwork you see is decided entirely by the font the device
+resolves*, so the whole job is getting the font stack right. Two ordering rules
+do that, and both are easy to get wrong:
+
+1. **No text font before the emoji font.** San Francisco (`-apple-system`)
+   carries monochrome glyphs for `❤ ✌ ☝ ✍`, so listing it ahead of
+   `Apple Color Emoji` hands those characters to SF and renders a flat black
+   glyph instead of the Apple emoji.
+2. **Emoji families before the generic `sans-serif`.** A generic family always
+   resolves to something, which can end the fallback chain before the emoji
+   families are ever consulted.
+
+Characters that default to text presentation (`❤️ ✌️ ⚠️ ▶️ …`) additionally
+carry `U+FE0F`. All 22 in the source are checked.
+
+**Verify it yourself on device:** open `/emoji-check.html` on the phone you care
+about. It reports which emoji font the browser actually resolved — comparing
+rendered pixels rather than `document.fonts.check()`, which returns true for
+fonts that are not installed — and renders the app's reaction set at size.
+
+Apple's emoji font ships only with iOS and macOS and cannot legally be
+redistributed, so a Linux or Windows machine falls back to its own set. That
+affects screenshots taken during development, never the phone this is built
+for. Bundling a third-party set (Twemoji, OpenMoji) would make every platform
+identical, but none of them *are* Apple's artwork — that is a deliberate
+trade-off, not an oversight.
 
 ---
 

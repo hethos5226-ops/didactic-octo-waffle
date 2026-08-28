@@ -42,14 +42,24 @@
   /* Apple Color Emoji leads both stacks so every emoji — standalone glyphs
      and ones sitting inline in a sentence — renders as the iPhone set. On
      iOS/macOS this is the real system font and matches Messages exactly.
-     Apple's font is proprietary and cannot be shipped, so other platforms
-     fall through to their own set; that only affects dev machines, not the
-     phone this is built for. */
-  --font-emoji: 'Apple Color Emoji', -apple-system, 'Segoe UI Emoji',
-    'Noto Color Emoji', sans-serif;
+     Apple's font is proprietary and cannot be redistributed, so other
+     platforms fall through to their own set; that affects dev machines, not
+     the phone this is built for.
+
+     Two ordering rules matter here and are easy to get wrong:
+
+     1. No TEXT font may appear before the emoji font. San Francisco
+        (-apple-system) carries monochrome glyphs for ❤ ✌ ☝ ✍ and friends, so
+        listing it first hands those characters to SF and renders a flat black
+        glyph instead of the Apple emoji.
+     2. Emoji fonts must come BEFORE the generic `sans-serif`. A generic family
+        always resolves to something, which can end the fallback chain before
+        the emoji families are ever consulted. */
+  --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji',
+    sans-serif;
   --font: 'Outfit', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system,
-    'Segoe UI', Roboto, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Noto Color Emoji';
+    'Segoe UI', Roboto, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Noto Color Emoji', sans-serif;
 
   color-scheme: dark;
 }
@@ -61,6 +71,7 @@ html, body, #root { height: 100%; }
 body {
   margin: 0;
   font-family: var(--font);
+  font-variant-emoji: emoji;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;

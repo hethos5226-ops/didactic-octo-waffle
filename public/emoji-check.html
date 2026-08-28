@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>SCROLL — emoji check</title>
+    <style>
+      :root {
+        --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        padding: 24px 18px 60px;
+        background: #0a0616;
+        color: #fff;
+        font-family: ui-rounded, system-ui, -apple-system, sans-serif;
+        max-width: 460px;
+        margin: 0 auto;
+      }
+      h1 { font-size: 22px; margin: 0 0 4px; }
+      p { color: #b3a2dd; font-size: 14px; line-height: 1.5; }
+      .verdict {
+        padding: 16px;
+        border-radius: 18px;
+        margin: 18px 0;
+        font-weight: 800;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+      .yes { background: rgba(198,255,61,.14); border: 1px solid rgba(198,255,61,.5); color: #c6ff3d; }
+      .no  { background: rgba(255,159,28,.14); border: 1px solid rgba(255,159,28,.5); color: #ff9f1c; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 14px 0; }
+      td { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.1); }
+      td:last-child { text-align: right; color: #b3a2dd; font-variant-numeric: tabular-nums; }
+      .grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+      .grid span { font-family: var(--font-emoji); font-size: 38px; line-height: 1; }
+      h2 { font-size: 13px; letter-spacing: 1.4px; color: #b3a2dd; margin: 26px 0 6px; }
+      code { background: rgba(255,255,255,.08); padding: 2px 6px; border-radius: 5px; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>Emoji check 🔍</h1>
+    <p>
+      Open this page on the device you care about. It reports which emoji font
+      the browser actually resolves, so you can confirm what SCROLL renders
+      without taking anyone's word for it.
+    </p>
+
+    <div id="verdict" class="verdict">Checking…</div>
+
+    <h2>WHAT THE BROWSER FOUND</h2>
+    <table id="report"></table>
+
+    <h2>THE APP'S REACTION SET</h2>
+    <div class="grid">
+      <span>😂</span><span>💀</span><span>😭</span><span>❤️</span>
+      <span>🤯</span><span>🤨</span><span>🔥</span><span>👎</span>
+    </div>
+
+    <h2>TEXT-DEFAULT CHARACTERS</h2>
+    <p style="font-size:13px">
+      These need <code>U+FE0F</code> to render in colour. If any appears as a
+      flat black glyph, the font stack is picking a text font first.
+    </p>
+    <div class="grid">
+      <span>❤️</span><span>✌️</span><span>☝️</span><span>✍️</span>
+      <span>⚠️</span><span>▶️</span><span>©️</span><span>✔️</span>
+    </div>
+
+    <script>
+      const FONTS = [
+        ['Apple Color Emoji', 'Apple — iOS / macOS'],
+        ['Segoe UI Emoji', 'Microsoft — Windows'],
+        ['Noto Color Emoji', 'Google — Android / Linux'],
+      ];
+
+      /**
+       * `document.fonts.check()` is not usable here: per spec it reports
+       * whether the text can be rendered using available fonts *including
+       * fallback*, so it answers "true" for fonts that are not installed.
+       *
+       * Instead, draw the emoji twice — once with the candidate family and
+       * once with a family that cannot exist — and compare the pixels. If the
+       * candidate is missing, both draws fall back to the same font and the
+       * bitmaps are identical.
+       */
+      const BOGUS = 'ZZNoSuchFamily42';
+
+      function render(family) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.clearRect(0, 0, 64, 64);
+        ctx.font = `44px "${family}", "${BOGUS}"`;
+        ctx.textBaseline = 'top';
+        ctx.fillText('😂', 2, 2);
+        return ctx.getImageData(0, 0, 64, 64).data;
+      }
+
+      function sameBitmap(a, b) {
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+        return true;
+      }
+
+      let resolved = null;
+      const rows = [];
+      let baseline;
+      try {
+        baseline = render(BOGUS);
+      } catch (e) {
+        baseline = null;
+      }
+
+      for (const [family, vendor] of FONTS) {
+        let installed = false;
+        if (baseline) {
+          try {
+            installed = !sameBitmap(render(family), baseline);
+          } catch (e) {
+            installed = false;
+          }
+        }
+        if (installed && !resolved) resolved = family;
+        rows.push([vendor, installed ? 'installed' : 'not installed']);
+      }
+
+      rows.push(['Platform', navigator.platform || 'unknown']);
+      rows.push(['Renders the app\u2019s emoji', resolved || 'system default']);
+
+      document.getElementById('report').innerHTML = rows
+        .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
+        .join('');
+
+      const verdict = document.getElementById('verdict');
+      if (resolved === 'Apple Color Emoji') {
+        verdict.className = 'verdict yes';
+        verdict.textContent =
+          '\u2705 Apple Color Emoji is installed and first in the stack. The emoji below are the genuine Apple set \u2014 exactly what SCROLL renders on this device.';
+      } else {
+        verdict.className = 'verdict no';
+        verdict.textContent =
+          '\u26a0\ufe0f Apple Color Emoji is not installed on this device, so it fell back to ' +
+          (resolved || 'a system default') +
+          '. That is a property of the device, not the app: Apple\u2019s emoji font ships only with iOS and macOS and cannot legally be bundled with a web app. Open this same page on an iPhone and it will report Apple Color Emoji.';
+      }
+    </script>
+  </body>
+</html>
