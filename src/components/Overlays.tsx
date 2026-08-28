@@ -24,10 +24,17 @@ export function ScrollerAnnouncement({ scroller, round, totalRounds, onDone }: S
   return (
     <div className="announce" onClick={onDone}>
       <div className="announce__rays" aria-hidden />
+      <RoamingLight />
       <div className="announce__body">
         <div className="announce__round">ROUND {round} OF {totalRounds}</div>
         <div className="announce__avatar">
-          <Avatar emoji={scroller.avatar} colour={scroller.colour} size={112} />
+          <Avatar
+            emoji={scroller.avatar}
+            photo={scroller.photo}
+            colour={scroller.colour}
+            size={112}
+            premium={scroller.premium}
+          />
         </div>
         <h1 className="announce__name">
           🎬 {scroller.isMe ? "YOU'RE" : `${scroller.handle.toUpperCase()} IS`} SCROLLING!
@@ -76,6 +83,24 @@ export function LevelUpOverlay({ level, onDone }: LevelUpProps) {
         )}
         <button className="btn btn--primary btn--lg" onClick={onDone}>Let's go 🚀</button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * A soft beam that wanders around the screen. It exists for the waiting beats —
+ * while a lobby is filling, while the room rates you, and while everyone sits
+ * through the "X is scrolling!" takeover waiting for the feed to come up. A
+ * still screen reads as frozen; a moving light reads as loading.
+ */
+export function RoamingLight({ tint = 'rgba(255, 255, 255, 0.34)' }: { tint?: string }) {
+  return (
+    <div className="roam" aria-hidden>
+      <span className="roam__beam" style={{ background: `radial-gradient(circle, ${tint}, transparent 68%)` }} />
+      <span
+        className="roam__beam roam__beam--alt"
+        style={{ background: `radial-gradient(circle, ${tint}, transparent 70%)` }}
+      />
     </div>
   );
 }

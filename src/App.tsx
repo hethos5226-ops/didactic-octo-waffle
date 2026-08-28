@@ -9,6 +9,8 @@ import { ResultsScreen } from './screens/ResultsScreen';
 import { SummaryScreen } from './screens/SummaryScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { CreateLobbyScreen, JoinLobbyScreen, FriendsScreen } from './screens/LobbySetupScreens';
+import { PremiumScreen } from './screens/PremiumScreen';
+import { EditProfileScreen } from './screens/EditProfileScreen';
 import { LevelUpOverlay, ScrollerAnnouncement, Toast } from './components/Overlays';
 import { currentScroller, StoreProvider, useStore } from './state/store';
 
@@ -38,6 +40,8 @@ function Router() {
     case 'friends': return <FriendsScreen />;
     case 'createLobby': return <CreateLobbyScreen />;
     case 'joinLobby': return <JoinLobbyScreen />;
+    case 'premium': return <PremiumScreen />;
+    case 'editProfile': return <EditProfileScreen />;
     case 'announce': return session ? <SessionScreen /> : <HomeScreen />;
     default: return <HomeScreen />;
   }

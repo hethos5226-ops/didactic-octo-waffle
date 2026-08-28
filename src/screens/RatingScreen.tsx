@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Avatar } from '../components/Avatar';
+import { RoamingLight } from '../components/Overlays';
 import { SCORE_CATEGORIES } from '../data/reactions';
 import { currentScroller, useStore } from '../state/store';
 import { ratingFromReactions } from '../state/scoring';
@@ -65,6 +66,7 @@ export function RatingScreen() {
   if (iScrolled) {
     return (
       <div className="screen rating rating--waiting">
+        <RoamingLight tint="rgba(255, 46, 147, 0.3)" />
         <div className="rating__waitdots" aria-hidden>
           {session.members.filter((m) => !m.isMe).map((m, i) => (
             <span key={m.id} style={{ animationDelay: `${i * 0.18}s` }}>{m.avatar}</span>
@@ -80,7 +82,13 @@ export function RatingScreen() {
   return (
     <div className="screen rating">
       <header className="rating__head">
-        <Avatar emoji={scroller.avatar} colour={scroller.colour} flag={scroller.flag} size={62} />
+        <Avatar
+          emoji={scroller.avatar}
+          photo={scroller.photo}
+          colour={scroller.colour}
+          flag={scroller.flag}
+          size={62}
+        />
         <div>
           <span className="eyebrow">RATE THE FEED</span>
           <h1 className="title">How was @{scroller.handle}'s FYP?</h1>

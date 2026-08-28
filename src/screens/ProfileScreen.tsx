@@ -4,6 +4,7 @@ import { PEOPLE } from '../data/people';
 import { SCORE_CATEGORIES } from '../data/reactions';
 import { LEVEL_TITLES, progressionFromXp, titleForLevel } from '../data/levels';
 import { VIBES } from '../data/vibes';
+import { sharedTags } from '../data/hashtags';
 import { feedScoreFrom, percentages } from '../state/scoring';
 import { useStore } from '../state/store';
 import type { CategoryId } from '../state/types';
@@ -32,6 +33,8 @@ export function ProfileScreen() {
       };
   const score = isMe ? feedScoreFrom(pcts) : other!.feedScore;
   const vibes = isMe ? profile.vibes : other!.vibes;
+  const tags = isMe ? profile.hashtags : other!.hashtags;
+  const common = isMe ? [] : sharedTags(profile.hashtags, other!.hashtags);
 
   const nextTitle = LEVEL_TITLES.find((t) => t.level > level);
 
@@ -42,8 +45,8 @@ export function ProfileScreen() {
         <span className="eyebrow">{isMe ? 'YOUR PROFILE' : 'PROFILE'}</span>
         <div className="spacer" />
         {isMe && (
-          <button className="profile__signout" onClick={() => dispatch({ type: 'signOut' })}>
-            Sign out
+          <button className="profile__edit" onClick={() => dispatch({ type: 'go', route: 'editProfile' })}>
+            Edit
           </button>
         )}
       </header>
@@ -56,14 +59,19 @@ export function ProfileScreen() {
         />
         <Avatar
           emoji={isMe ? profile.avatar : other!.avatar}
+          photo={isMe ? profile.photo : null}
           colour={isMe ? profile.colour : other!.colour}
           flag={isMe ? profile.flag : other!.flag}
           size={96}
+          premium={isMe ? profile.premium : other!.level >= 25}
         />
         <h1 className="profile__handle">@{isMe ? profile.handle : other!.handle}</h1>
         <div className="profile__level-pill">
           <span aria-hidden>{title.emoji}</span> LEVEL {level} · {title.title}
         </div>
+        {(isMe ? profile.premium : other!.level >= 25) && (
+          <div className="profile__premium-pill">👑 PREMIUM</div>
+        )}
       </div>
 
       {isMe && (
@@ -120,9 +128,56 @@ export function ProfileScreen() {
         </div>
       </div>
 
+      {tags.length > 0 && (
+        <div className="card profile__tags-card">
+          <span className="eyebrow">{isMe ? "WHAT YOU'RE INTO" : "WHAT THEY'RE INTO"}</span>
+          {common.length > 0 && (
+            <p className="profile__common">
+              🤝 You both like {common.map((t) => `#${t}`).join(', ')}
+            </p>
+          )}
+          <div className="wrap profile__tags">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className={`tag${common.includes(t) ? ' tag--common' : ''}`}
+              >
+                #{t}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isMe && !profile.premium && (
+        <button
+          className="home__premium"
+          onClick={() => dispatch({ type: 'go', route: 'premium' })}
+        >
+          <span className="home__premium-crown" aria-hidden>👑</span>
+          <div className="grow">
+            <div className="home__premium-title">GO PREMIUM</div>
+            <p className="tiny">No ads, and scroll first in any lobby.</p>
+          </div>
+          <span className="home__premium-arrow" aria-hidden>›</span>
+        </button>
+      )}
+
+      {isMe && profile.premium && (
+        <button className="btn btn--ghost btn--block" onClick={() => dispatch({ type: 'go', route: 'premium' })}>
+          👑 Manage Premium
+        </button>
+      )}
+
       {isMe && profile.friends.length > 0 && (
         <button className="btn btn--ghost btn--block" onClick={() => dispatch({ type: 'go', route: 'friends' })}>
           👥 See your {profile.friends.length} {profile.friends.length === 1 ? 'friend' : 'friends'}
+        </button>
+      )}
+
+      {isMe && (
+        <button className="profile__signout-btn" onClick={() => dispatch({ type: 'signOut' })}>
+          Sign out
         </button>
       )}
     </div>

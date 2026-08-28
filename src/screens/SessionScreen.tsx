@@ -155,7 +155,9 @@ export function SessionScreen() {
                 className={`session__watcher-face${speakingId === m.id ? ' is-speaking' : ''}`}
                 style={{ borderColor: m.colour }}
               >
-                {m.avatar}
+                {m.photo
+                  ? <img className="session__watcher-img" src={m.photo} alt="" />
+                  : m.avatar}
               </span>
             </div>
           ))}

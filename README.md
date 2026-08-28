@@ -18,8 +18,20 @@ npm install
 npm run dev
 ```
 
-Open the printed URL. It is built mobile-first — use a narrow window or your
-browser's device toolbar. `npm run build` produces a static `dist/`.
+Open the printed URL. **This is designed for an iPhone held in portrait**, not
+for a desktop browser — use your browser's device toolbar (iPhone 15 Pro, or
+anything from an SE up to a Pro Max) or open it on a phone. On a wide screen it
+renders inside a 393 × 852 frame so what you see is what ships. `npm run build`
+produces a static `dist/`.
+
+### Emoji
+
+Emoji are the app's whole visual language, so `Apple Color Emoji` leads both
+font stacks — standalone glyphs and ones sitting inline in a sentence. On
+iPhone, iPad and Mac that is the real system font and matches Messages exactly.
+Apple's emoji font is proprietary and cannot be bundled, so a Linux or Windows
+dev machine falls through to its own set; that affects screenshots taken during
+development, never the phone this is built for.
 
 ---
 
@@ -39,6 +51,10 @@ HOME  →  match (solo / duo / trio)  →  LOBBY  →  "🎬 JAKE IS SCROLLING!"
    Ten videos. There is a counter, because a round should have a shape.
 4. **Everyone reacts.** 😂 💀 😭 ❤️ 🤯 🤨 🔥 👎 float up the screen with the
    name of whoever sent them. Voice is always on; there is a text chat too.
+4b. **You can see what you have in common.** Everyone picks hashtags at
+   sign-up — `#dogs`, `#brainrot`, whatever they actually watch — and shared
+   ones are called out on each person's row in the lobby. "You both like #dogs"
+   is a better reason to add someone than a matching category chip.
 5. **The round ends and the room rates the feed** — not out of five stars, but
    on FUNNY / CHAOTIC / FIRE / WTF / GOOD FYP.
 6. **That becomes a Feed Score**, which follows the profile around and moves
@@ -71,6 +87,9 @@ HOME  →  match (solo / duo / trio)  →  LOBBY  →  "🎬 JAKE IS SCROLLING!"
 | Profile | ✅ level, score, category breakdown, stats, vibes |
 | Add friend / like | ✅ |
 | Private lobby + invite code | ✅ `FYP-7K2Q` + shareable link |
+| Profile photo | ✅ photo or emoji face, cropped and downscaled on device |
+| Interest hashtags | ✅ `#dogs` `#brainrot`, suggested or typed |
+| Premium | ✅ removes ads, claims the first turn, crown badge |
 
 Everything persists to `localStorage`, so your level and Feed Score are still
 there when you come back.
@@ -133,11 +152,29 @@ actually means "I'd watch this again".
 prompt. The fastest way to lose someone is to put a form between them and the
 thing they came to try.
 
+**Hashtags feed the algorithm as well as the matching.** A recognised tag maps
+to a vibe, so picking `#dogs` also nudges your generated feed towards animals —
+ordered behind the vibes you picked deliberately. Tags that match nothing still
+count for matching, they just don't steer the feed.
+
+**Profile photos never leave the device.** A picked image is centre-cropped
+square and downscaled to 320px JPEG before it is stored, because the profile
+lives in `localStorage` and a raw camera shot would blow that budget on its own.
+`createImageBitmap` handles EXIF orientation, so a photo taken sideways comes
+out the right way up.
+
+**Premium is built as a real absence, not a promise.** Ad slots take the space
+an ad would take, so removing them is a visible difference. The "scroll first"
+perk moves you to the front of the rotation and leaves everyone else's relative
+order intact — a head start, not a reshuffle of someone else's session. Nothing
+is charged and no payment details are collected.
+
 ---
 
 ## Not built yet
 
 The real ones, roughly in order: actual screen capture with the platform
 permissions that implies, WebRTC voice, a matchmaking service, moderation and
-reporting (a stranger's screen is a stranger's screen), and accounts that
-survive a device.
+reporting (a stranger's screen is a stranger's screen), payments behind the
+Premium screen, an ad network behind the slots, and accounts that survive a
+device.

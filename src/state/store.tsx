@@ -21,8 +21,12 @@ function loadProfile(): Profile | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Profile;
     if (!parsed?.handle) return null;
-    // Tallies gained categories over time; backfill anything missing.
+    // The profile shape has grown; backfill anything a stored one predates so
+    // an existing player is never dropped back to the sign-up screen.
     parsed.tallies = { ...emptyTallies(), ...parsed.tallies };
+    parsed.hashtags = parsed.hashtags ?? [];
+    parsed.photo = parsed.photo ?? null;
+    parsed.premium = parsed.premium ?? false;
     return parsed;
   } catch {
     return null;
@@ -39,17 +43,20 @@ function saveProfile(profile: Profile | null) {
 }
 
 export function newProfile(input: {
-  handle: string; avatar: string; colour: string;
-  country: string; flag: string; vibes: VibeId[];
+  handle: string; avatar: string; photo: string | null; colour: string;
+  country: string; flag: string; vibes: VibeId[]; hashtags: string[];
 }): Profile {
   return {
     id: 'me',
     handle: input.handle,
     avatar: input.avatar,
+    photo: input.photo,
     colour: input.colour,
     country: input.country,
     flag: input.flag,
     vibes: input.vibes,
+    hashtags: input.hashtags,
+    premium: false,
     xp: 0,
     tallies: emptyTallies(),
     profileLikes: 0,
@@ -64,19 +71,21 @@ export function newProfile(input: {
 
 function memberFromPerson(p: Person, team: 'yours' | 'theirs'): Member {
   return {
-    id: p.id, handle: p.handle, avatar: p.avatar, colour: p.colour,
+    id: p.id, handle: p.handle, avatar: p.avatar, photo: null, colour: p.colour,
     country: p.country, flag: p.flag, level: p.level, feedScore: p.feedScore,
-    vibes: p.vibes, isMe: false, team, ready: true,
+    vibes: p.vibes, hashtags: p.hashtags, premium: p.level >= 25,
+    isMe: false, team, ready: true,
   };
 }
 
 function memberFromProfile(profile: Profile): Member {
   const { level } = progressionFromXp(profile.xp);
   return {
-    id: 'me', handle: profile.handle, avatar: profile.avatar, colour: profile.colour,
-    country: profile.country, flag: profile.flag, level,
+    id: 'me', handle: profile.handle, avatar: profile.avatar, photo: profile.photo,
+    colour: profile.colour, country: profile.country, flag: profile.flag, level,
     feedScore: feedScoreFrom(percentages(profile.tallies)),
-    vibes: profile.vibes, isMe: true, team: 'yours', ready: true,
+    vibes: profile.vibes, hashtags: profile.hashtags, premium: profile.premium,
+    isMe: true, team: 'yours', ready: true,
   };
 }
 
@@ -89,9 +98,18 @@ function shuffled<T>(items: T[]): T[] {
   return copy;
 }
 
-/** Pick strangers, never repeating anyone already in the lobby. */
+/**
+ * Pick strangers, never repeating anyone already in the lobby.
+ *
+ * `exclude` is matched against both ids and handles: the cast contains a
+ * @charley, and a lobby listing two of them reads as a bug, so the player's
+ * own handle is excluded too.
+ */
 export function strangers(count: number, exclude: string[] = []): Person[] {
-  return shuffled(PEOPLE.filter((p) => !exclude.includes(p.id))).slice(0, count);
+  const blocked = new Set(exclude.map((e) => e.toLowerCase()));
+  return shuffled(
+    PEOPLE.filter((p) => !blocked.has(p.id.toLowerCase()) && !blocked.has(p.handle.toLowerCase())),
+  ).slice(0, count);
 }
 
 export function makeLobbyCode(): string {
@@ -126,7 +144,11 @@ export type Action =
   | { type: 'likePerson'; id: string }
   | { type: 'addFriend'; id: string }
   | { type: 'dismissLevelUp' }
-  | { type: 'dismissToast' };
+  | { type: 'dismissToast' }
+  | { type: 'buyPremium' }
+  | { type: 'cancelPremium' }
+  | { type: 'claimFirstTurn' }
+  | { type: 'updateProfile'; changes: Partial<Pick<Profile, 'handle' | 'avatar' | 'photo' | 'colour' | 'country' | 'flag' | 'hashtags' | 'vibes'>> };
 
 export const initialState: AppState = {
   profile: null,
@@ -182,6 +204,7 @@ function reducer(state: AppState, action: Action): AppState {
           results: [],
           liked: [],
           friended: [],
+          claimedFirst: false,
         },
       };
     }
@@ -206,6 +229,7 @@ function reducer(state: AppState, action: Action): AppState {
           results: [],
           liked: [],
           friended: [],
+          claimedFirst: false,
         },
       };
 
@@ -443,6 +467,44 @@ function reducer(state: AppState, action: Action): AppState {
         session: { ...state.session, friended: [...state.session.friended, action.id] },
         toast: toast('🤝', `You and @${person?.handle ?? action.id} are friends!`),
       };
+    }
+
+    case 'buyPremium': {
+      if (!state.profile) return state;
+      return {
+        ...state,
+        profile: { ...state.profile, premium: true },
+        route: 'home',
+        toast: toast('👑', 'Premium unlocked — no more ads!'),
+      };
+    }
+
+    case 'cancelPremium': {
+      if (!state.profile) return state;
+      return {
+        ...state,
+        profile: { ...state.profile, premium: false },
+        toast: toast('👋', 'Premium cancelled'),
+      };
+    }
+
+    case 'claimFirstTurn': {
+      // A Premium perk: jump the shuffle and take the opening round. It only
+      // moves you to the front — everyone else keeps their relative order, so
+      // it is a head start, not a reshuffle of somebody else's session.
+      if (!state.session || !state.profile?.premium) return state;
+      if (state.session.claimedFirst) return state;
+      const order = ['me', ...state.session.order.filter((id) => id !== 'me')];
+      return {
+        ...state,
+        session: { ...state.session, order, claimedFirst: true },
+        toast: toast('👑', "You're scrolling first"),
+      };
+    }
+
+    case 'updateProfile': {
+      if (!state.profile) return state;
+      return { ...state, profile: { ...state.profile, ...action.changes } };
     }
 
     case 'dismissLevelUp':

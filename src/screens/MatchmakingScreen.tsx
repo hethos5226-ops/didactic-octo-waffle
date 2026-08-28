@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Avatar } from '../components/Avatar';
+import { RoamingLight } from '../components/Overlays';
 import { memberFromProfile, memberFromPerson, strangers, useStore } from '../state/store';
 import type { Member } from '../state/types';
 
@@ -22,7 +23,10 @@ export function MatchmakingScreen() {
   const size = state.matchmakingSize;
   const needed = size * 2 - 1;
 
-  const roster = useMemo(() => strangers(needed), [needed]);
+  const roster = useMemo(
+    () => strangers(needed, [profile.handle]),
+    [needed, profile.handle],
+  );
   const [found, setFound] = useState<Member[]>([]);
   const [line, setLine] = useState(0);
   const cancelled = useRef(false);
@@ -69,6 +73,7 @@ export function MatchmakingScreen() {
 
   return (
     <div className="screen matchmaking">
+      <RoamingLight tint="rgba(34, 225, 255, 0.26)" />
       <div className="mm__radar" aria-hidden>
         <span className="mm__ring" />
         <span className="mm__ring" style={{ animationDelay: '0.7s' }} />
@@ -81,14 +86,26 @@ export function MatchmakingScreen() {
 
       <div className="mm__slots">
         <div className="mm__slot mm__slot--me">
-          <Avatar emoji={profile.avatar} colour={profile.colour} flag={profile.flag} size={54} />
+          <Avatar
+            emoji={profile.avatar}
+            photo={profile.photo}
+            colour={profile.colour}
+            flag={profile.flag}
+            size={54}
+          />
           <span className="mm__slot-name">you</span>
         </div>
         {Array.from({ length: needed }, (_, i) => {
           const member = found[i];
           return member ? (
             <div className="mm__slot pop" key={member.id}>
-              <Avatar emoji={member.avatar} colour={member.colour} flag={member.flag} size={54} />
+              <Avatar
+                emoji={member.avatar}
+                photo={member.photo}
+                colour={member.colour}
+                flag={member.flag}
+                size={54}
+              />
               <span className="mm__slot-name">{member.handle}</span>
             </div>
           ) : (

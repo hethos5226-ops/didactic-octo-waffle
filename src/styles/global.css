@@ -34,12 +34,22 @@
   --r-lg: 26px;
   --r-xl: 34px;
 
-  --shadow-lift: 0 18px 40px -18px rgba(0, 0, 0, 0.9);
-  --shadow-glow: 0 0 34px -6px rgba(255, 46, 147, 0.55);
+  --shadow-lift: 0 16px 34px -20px rgba(0, 0, 0, 0.85);
+  --shadow-glow: 0 8px 22px -12px rgba(255, 46, 147, 0.6);
+  /* Reserved for the one element that should genuinely glow: the feed. */
+  --shadow-stage: 0 24px 60px -24px rgba(0, 0, 0, 0.95);
 
+  /* Apple Color Emoji leads both stacks so every emoji — standalone glyphs
+     and ones sitting inline in a sentence — renders as the iPhone set. On
+     iOS/macOS this is the real system font and matches Messages exactly.
+     Apple's font is proprietary and cannot be shipped, so other platforms
+     fall through to their own set; that only affects dev machines, not the
+     phone this is built for. */
+  --font-emoji: 'Apple Color Emoji', -apple-system, 'Segoe UI Emoji',
+    'Noto Color Emoji', sans-serif;
   --font: 'Outfit', ui-rounded, 'SF Pro Rounded', system-ui, -apple-system,
-    'Segoe UI', Roboto, sans-serif;
-  --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+    'Segoe UI', Roboto, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Noto Color Emoji';
 
   color-scheme: dark;
 }
@@ -80,9 +90,14 @@ ul { margin: 0; padding: 0; list-style: none; }
   100% { filter: hue-rotate(24deg); transform: scale(1.06); }
 }
 
+/* Built for an iPhone held in portrait. On a phone this is the whole screen,
+   edge to edge, with the notch and the home indicator respected via safe-area
+   insets. The desktop frame below is a convenience for development, not the
+   target — nothing is laid out for a wide viewport. */
 .phone {
   position: relative;
-  width: min(100vw, 440px);
+  width: 100%;
+  max-width: 460px;
   height: 100dvh;
   max-height: 100dvh;
   margin: 0 auto;
@@ -90,15 +105,22 @@ ul { margin: 0; padding: 0; list-style: none; }
   flex-direction: column;
   overflow: hidden;
   background: linear-gradient(180deg, rgba(21, 10, 46, 0.72), rgba(10, 6, 22, 0.9));
+  /* Consumed by .screen and the session's bottom bars. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (min-width: 900px) {
   .phone {
-    height: min(920px, calc(100dvh - 48px));
-    margin: 24px auto;
+    /* iPhone 15 Pro at 1x, so what you see here is what ships. */
+    width: 393px;
+    height: min(852px, calc(100dvh - 40px));
+    margin: 20px auto;
     border-radius: 46px;
     border: 1px solid var(--stroke);
-    box-shadow: 0 50px 120px -40px #000, 0 0 0 10px rgba(255, 255, 255, 0.03);
+    box-shadow: 0 40px 90px -40px #000, 0 0 0 9px rgba(255, 255, 255, 0.03);
+    --safe-top: 8px;
+    --safe-bottom: 8px;
   }
 }
 
@@ -108,11 +130,17 @@ ul { margin: 0; padding: 0; list-style: none; }
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 20px 18px 28px;
+  padding: calc(16px + var(--safe-top)) 18px calc(28px + var(--safe-bottom));
   animation: screen-in 340ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .screen--flush { padding: 0; }
+
+/* Shorter phones (SE, mini) get a little of the vertical padding back. */
+@media (max-height: 700px) {
+  .screen { padding-top: calc(10px + var(--safe-top)); gap: 12px; }
+  .title { font-size: 23px; }
+}
 
 @keyframes screen-in {
   from { opacity: 0; transform: translateY(14px) scale(0.985); }
@@ -246,6 +274,26 @@ ul { margin: 0; padding: 0; list-style: none; }
 @keyframes speak-pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(198, 255, 61, 0.6); }
   50% { box-shadow: 0 0 0 7px rgba(198, 255, 61, 0); }
+}
+
+.avatar--photo { background: #1b1030; }
+
+.avatar__img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar__crown {
+  position: absolute;
+  left: -2px;
+  top: -6px;
+  font-family: var(--font-emoji);
+  line-height: 1;
+  transform: rotate(-18deg);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
 .avatar__flag {

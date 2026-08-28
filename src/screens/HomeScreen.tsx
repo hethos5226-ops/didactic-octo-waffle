@@ -2,6 +2,7 @@ import { progressionFromXp, titleForLevel } from '../data/levels';
 import { feedScoreFrom, percentages } from '../state/scoring';
 import { useStore } from '../state/store';
 import { Avatar } from '../components/Avatar';
+import { AdSlot } from '../components/AdSlot';
 import type { GroupSize } from '../state/types';
 
 const MODES: { size: GroupSize; emoji: string; label: string; hint: string }[] = [
@@ -26,7 +27,14 @@ export function HomeScreen() {
           onClick={() => dispatch({ type: 'viewPerson', id: null })}
           aria-label="Your profile"
         >
-          <Avatar emoji={profile.avatar} colour={profile.colour} flag={profile.flag} size={42} />
+          <Avatar
+            emoji={profile.avatar}
+            photo={profile.photo}
+            colour={profile.colour}
+            flag={profile.flag}
+            size={42}
+            premium={profile.premium}
+          />
         </button>
       </header>
 
@@ -92,7 +100,14 @@ export function HomeScreen() {
         className="home__profile"
         onClick={() => dispatch({ type: 'viewPerson', id: null })}
       >
-        <Avatar emoji={profile.avatar} colour={profile.colour} flag={profile.flag} size={56} />
+        <Avatar
+          emoji={profile.avatar}
+          photo={profile.photo}
+          colour={profile.colour}
+          flag={profile.flag}
+          size={56}
+          premium={profile.premium}
+        />
         <div className="grow home__profile-body">
           <div className="home__profile-handle">@{profile.handle}</div>
           <div className="home__profile-level">
@@ -110,6 +125,22 @@ export function HomeScreen() {
           <span className="tiny">FEED</span>
         </div>
       </button>
+
+      {!profile.premium && (
+        <button
+          className="home__premium"
+          onClick={() => dispatch({ type: 'go', route: 'premium' })}
+        >
+          <span className="home__premium-crown" aria-hidden>👑</span>
+          <div className="grow">
+            <div className="home__premium-title">GO PREMIUM</div>
+            <p className="tiny">No ads, and scroll first in any lobby.</p>
+          </div>
+          <span className="home__premium-arrow" aria-hidden>›</span>
+        </button>
+      )}
+
+      <AdSlot />
 
       {profile.friends.length > 0 && (
         <button

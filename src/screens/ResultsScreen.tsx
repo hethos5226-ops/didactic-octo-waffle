@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { FeedScoreRing } from '../components/FeedScoreRing';
 import { Confetti } from '../components/Overlays';
+import { AdSlot } from '../components/AdSlot';
 import { SCORE_CATEGORIES, REACTIONS } from '../data/reactions';
 import { progressionFromXp } from '../data/levels';
 import { useCountUp } from '../hooks/useCountUp';
@@ -30,7 +31,13 @@ export function ResultsScreen() {
       {result.feedScore >= 85 && <Confetti count={28} />}
 
       <header className="results__head">
-        <Avatar emoji={scroller.avatar} colour={scroller.colour} flag={scroller.flag} size={56} />
+        <Avatar
+          emoji={scroller.avatar}
+          photo={scroller.photo}
+          colour={scroller.colour}
+          flag={scroller.flag}
+          size={56}
+        />
         <div>
           <span className="eyebrow">ROUND {session.roundIndex + 1} RESULTS</span>
           <h1 className="title">
@@ -113,6 +120,8 @@ export function ResultsScreen() {
           </div>
         </div>
       </div>
+
+      <AdSlot variant="panel" />
 
       <button
         className="btn btn--primary btn--lg btn--block"

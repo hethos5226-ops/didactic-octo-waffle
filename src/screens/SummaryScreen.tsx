@@ -58,7 +58,14 @@ export function SummaryScreen() {
           const friended = profile.friends.includes(m.id);
           return (
             <li key={m.id} className="summary__person">
-              <Avatar emoji={m.avatar} colour={m.colour} flag={m.flag} size={50} />
+              <Avatar
+                emoji={m.avatar}
+                photo={m.photo}
+                colour={m.colour}
+                flag={m.flag}
+                size={50}
+                premium={m.premium}
+              />
               <div className="grow">
                 <div className="summary__person-handle">@{m.handle}</div>
                 <LevelBadge level={m.level} size="sm" />

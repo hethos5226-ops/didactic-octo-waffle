@@ -95,7 +95,9 @@ export function JoinLobbyScreen() {
     if (!joining) return;
     const timer = setTimeout(() => {
       const me = memberFromProfile(profile);
-      const host = strangers(2).map((p, i) => memberFromPerson(p, i === 0 ? 'yours' : 'theirs'));
+      const host = strangers(2, [profile.handle]).map((p, i) =>
+        memberFromPerson(p, i === 0 ? 'yours' : 'theirs'),
+      );
       const formatted = clean.startsWith('FYP') ? `FYP-${clean.slice(3)}` : `FYP-${clean}`;
       dispatch({ type: 'openLobby', mode: 'private', members: [me, ...host], code: formatted });
     }, 1400);

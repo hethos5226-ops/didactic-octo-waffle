@@ -3,6 +3,7 @@ import { Avatar } from '../components/Avatar';
 import { LevelBadge } from '../components/LevelBadge';
 import { PEOPLE } from '../data/people';
 import { VIBES } from '../data/vibes';
+import { sharedTags } from '../data/hashtags';
 import { memberFromPerson, strangers, useStore } from '../state/store';
 
 export function LobbyScreen() {
@@ -26,7 +27,9 @@ export function LobbyScreen() {
     const invitedFriends = PEOPLE.filter(
       (p) => state.profile!.friends.includes(p.id) && !already.includes(p.id),
     );
-    const queue = [...invitedFriends, ...strangers(3, [...already, ...invitedFriends.map((f) => f.id)])]
+    const queue = [...invitedFriends, ...strangers(3, [
+      ...already, state.profile!.handle, ...invitedFriends.map((f) => f.id),
+    ])]
       .slice(0, Math.max(0, 3 - session.members.length));
 
     const timers = queue.map((person, i) =>
@@ -91,7 +94,14 @@ export function LobbyScreen() {
       <ul className="lobby__list">
         {session.members.map((m, i) => (
           <li key={m.id} className="lobby__member pop" style={{ animationDelay: `${i * 70}ms` }}>
-            <Avatar emoji={m.avatar} colour={m.colour} flag={m.flag} size={50} />
+            <Avatar
+              emoji={m.avatar}
+              photo={m.photo}
+              colour={m.colour}
+              flag={m.flag}
+              size={50}
+              premium={m.premium}
+            />
             <div className="grow">
               <div className="lobby__member-top">
                 <span className="lobby__handle">
@@ -109,6 +119,14 @@ export function LobbyScreen() {
                   </span>
                 ))}
               </div>
+              {!m.isMe && (() => {
+                const common = sharedTags(state.profile!.hashtags, m.hashtags);
+                return common.length > 0 ? (
+                  <div className="lobby__common">
+                    🤝 {common.map((t) => `#${t}`).join(' ')}
+                  </div>
+                ) : null;
+              })()}
             </div>
             {!m.isMe && session.mode === 'random' && (
               <span className={`lobby__team lobby__team--${m.team}`}>
@@ -131,13 +149,32 @@ export function LobbyScreen() {
             return (
               <div key={id} className="lobby__order-item">
                 <span className="lobby__order-num">{i + 1}</span>
-                <span aria-hidden>{m.avatar}</span>
+                {m.photo
+                  ? <img className="lobby__order-img" src={m.photo} alt="" />
+                  : <span aria-hidden>{m.avatar}</span>}
                 <span className="tiny">{m.isMe ? 'you' : m.handle}</span>
               </div>
             );
           })}
         </div>
         <p className="tiny">Shuffled again every session. 10 videos each.</p>
+
+        {state.profile!.premium ? (
+          <button
+            className="lobby__claim"
+            disabled={session.claimedFirst}
+            onClick={() => dispatch({ type: 'claimFirstTurn' })}
+          >
+            {session.claimedFirst ? "👑 You're going first" : '👑 Scroll first (Premium)'}
+          </button>
+        ) : (
+          <button
+            className="lobby__claim lobby__claim--locked"
+            onClick={() => dispatch({ type: 'go', route: 'premium' })}
+          >
+            🔒 Want to go first? Get Premium 👑
+          </button>
+        )}
       </div>
 
       <div className="lobby__actions">
