@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { firstEmoji } from '../data/emoji';
 import { AVATARS } from '../data/people';
 import { PhotoError, photoFromFile } from '../data/photo';
 import { Avatar } from './Avatar';
@@ -21,8 +22,23 @@ export function AvatarPicker({
   emoji, photo, colour, flag, onEmoji, onPhoto,
 }: AvatarPickerProps) {
   const fileInput = useRef<HTMLInputElement>(null);
+  const emojiInput = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [custom, setCustom] = useState('');
+
+  // Anything typed here comes from the device's own emoji keyboard, so the
+  // grid only has to carry a handful of starters rather than every face.
+  const useCustom = (raw: string) => {
+    const picked = firstEmoji(raw);
+    setCustom(picked);
+    if (picked) {
+      onEmoji(picked);
+      onPhoto(null);
+    }
+  };
+
+  const customIsActive = Boolean(custom) && custom === emoji && !photo;
 
   const pick = async (file: File | undefined) => {
     if (!file) return;
@@ -56,7 +72,6 @@ export function AvatarPicker({
               Remove photo
             </button>
           )}
-          {!photo && <p className="tiny">or pick an emoji face below</p>}
         </div>
       </div>
 
@@ -78,7 +93,7 @@ export function AvatarPicker({
             <button
               key={a}
               className={`auth__avatar${on ? ' is-on' : ''}`}
-              onClick={() => { onEmoji(a); onPhoto(null); }}
+              onClick={() => { onEmoji(a); onPhoto(null); setCustom(''); }}
               style={on ? { borderColor: colour, background: `${colour}33` } : undefined}
               aria-label={`Avatar ${a}`}
               aria-pressed={on}
@@ -87,7 +102,31 @@ export function AvatarPicker({
             </button>
           );
         })}
+
+        {/* Focuses the field below, which opens the device keyboard — switch
+            to its emoji tab and any face at all is one tap away. */}
+        <button
+          className={`auth__avatar auth__avatar--more${customIsActive ? ' is-on' : ''}`}
+          onClick={() => emojiInput.current?.focus()}
+          style={customIsActive ? { borderColor: colour, background: `${colour}33` } : undefined}
+          aria-label="Choose any emoji from your keyboard"
+        >
+          {customIsActive ? custom : '+'}
+        </button>
       </div>
+
+      <label className="picker__any">
+        <span className="picker__any-label tiny">or any emoji from your keyboard</span>
+        <input
+          ref={emojiInput}
+          className="picker__any-input"
+          value={custom}
+          onChange={(e) => useCustom(e.target.value)}
+          placeholder="tap"
+          autoComplete="off"
+          aria-label="Any emoji from your keyboard"
+        />
+      </label>
     </div>
   );
 }

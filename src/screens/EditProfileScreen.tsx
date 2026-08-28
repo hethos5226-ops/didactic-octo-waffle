@@ -67,7 +67,7 @@ export function EditProfileScreen() {
 
       <div className="card">
         <span className="eyebrow">WHERE YOU SCROLL FROM</span>
-        <div className="wrap auth__countries">
+        <div className="auth__countries">
           {COUNTRIES.map((c) => (
             <button
               key={c.name}

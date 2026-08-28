@@ -45,9 +45,18 @@ export function ProfileScreen() {
         <span className="eyebrow">{isMe ? 'YOUR PROFILE' : 'PROFILE'}</span>
         <div className="spacer" />
         {isMe && (
-          <button className="profile__edit" onClick={() => dispatch({ type: 'go', route: 'editProfile' })}>
-            Edit
-          </button>
+          <div className="row profile__nav-actions">
+            <button className="profile__edit" onClick={() => dispatch({ type: 'go', route: 'editProfile' })}>
+              Edit
+            </button>
+            <button
+              className="profile__settings"
+              onClick={() => dispatch({ type: 'go', route: 'settings' })}
+              aria-label="Settings"
+            >
+              ⚙️
+            </button>
+          </div>
         )}
       </header>
 
@@ -175,11 +184,6 @@ export function ProfileScreen() {
         </button>
       )}
 
-      {isMe && (
-        <button className="profile__signout-btn" onClick={() => dispatch({ type: 'signOut' })}>
-          Sign out
-        </button>
-      )}
     </div>
   );
 }

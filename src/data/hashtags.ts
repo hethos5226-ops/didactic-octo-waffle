@@ -72,3 +72,21 @@ export function vibesFromTags(tags: string[]): VibeId[] {
   }
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([vibe]) => vibe);
 }
+
+/**
+ * The vibes a profile should carry, given its hashtags.
+ *
+ * Vibes drive feed generation, so this must always return something usable
+ * even when someone picks three tags that all map to one vibe (or three tags
+ * that map to none). Recognised tags come first, in popularity order, then
+ * defaults pad it out to a mix worth watching.
+ */
+export function vibesForProfile(tags: string[]): VibeId[] {
+  const picked = vibesFromTags(tags);
+  const padding: VibeId[] = ['chaos', 'brainrot', 'animals', 'music'];
+  for (const vibe of padding) {
+    if (picked.length >= 3) break;
+    if (!picked.includes(vibe)) picked.push(vibe);
+  }
+  return picked.slice(0, 4);
+}

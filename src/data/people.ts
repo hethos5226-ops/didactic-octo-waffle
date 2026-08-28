@@ -217,9 +217,13 @@ export const PEOPLE: Person[] = [
   },
 ];
 
+/**
+ * A short starter set. Anything else is reachable through the "any emoji"
+ * field in the picker, which opens the device keyboard — twenty tiles of
+ * scrolling bought nothing that a keyboard does not do better.
+ */
 export const AVATARS = [
-  '🦊', '🐻', '🐙', '🦉', '🐲', '🐰', '🐺', '🐨', '🦖', '🐼',
-  '🐸', '🦄', '👽', '🤖', '🦆', '🐧', '🦩', '🐯', '🦥', '🐷',
+  '🦊', '🐻', '🐙', '🦉', '🐲', '🐰', '🐼', '👽', '🤖', '🦄',
 ];
 
 export const COUNTRIES = [

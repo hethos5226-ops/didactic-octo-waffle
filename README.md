@@ -64,16 +64,25 @@ iPhone, iPad and Mac that is the real system font and matches Messages exactly.
 
 Every emoji in the source is a plain Unicode codepoint (`😂` is `U+1F602`
 everywhere). *Which artwork you see is decided entirely by the font the device
-resolves*, so the whole job is getting the font stack right. Two ordering rules
-do that, and both are easy to get wrong:
+resolves*, so the whole job is getting the font stack right.
 
-1. **No text font before the emoji font.** San Francisco (`-apple-system`)
-   carries monochrome glyphs for `❤ ✌ ☝ ✍`, so listing it ahead of
-   `Apple Color Emoji` hands those characters to SF and renders a flat black
-   glyph instead of the Apple emoji.
-2. **Emoji families before the generic `sans-serif`.** A generic family always
-   resolves to something, which can end the fallback chain before the emoji
-   families are ever consulted.
+Two rules, learned the hard way:
+
+1. **No text font before the emoji font**, in `--font-emoji`. San Francisco
+   (`-apple-system`) carries monochrome glyphs for `❤ ✌ ☝ ✍`, so listing it
+   ahead of `Apple Color Emoji` hands those characters to SF and renders a flat
+   black glyph instead of the Apple emoji.
+2. **No emoji font in the *text* stack at all.** Emoji fonts also carry glyphs
+   for `0-9`, `#` and `*` — the bases of keycap sequences — so naming one in
+   `--font` hands it every digit in the UI the moment the webfont is slow or
+   missing. An emoji sitting inside a sentence instead falls through to the
+   platform's own emoji font, which on iOS *is* Apple Color Emoji: the right
+   glyph by the shortest route.
+
+(An earlier version of this file claimed a generic family like `sans-serif`
+ends the fallback chain, and put the emoji families ahead of it to compensate.
+That is what caused problem 2. Restricting the families with a `unicode-range`
+alias did not reliably prevent it either.)
 
 Characters that default to text presentation (`❤️ ✌️ ⚠️ ▶️ …`) additionally
 carry `U+FE0F`. All 22 in the source are checked.

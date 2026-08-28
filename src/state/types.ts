@@ -125,7 +125,8 @@ export type Route =
   | 'createLobby'
   | 'joinLobby'
   | 'premium'
-  | 'editProfile';
+  | 'editProfile'
+  | 'settings';
 
 export interface AppState {
   profile: Profile | null;
