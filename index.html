@@ -24,9 +24,92 @@
       href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap"
       rel="stylesheet"
     />
+    <style>
+      /* Inline: the stylesheet lives in the JS bundle, so when that fails to
+         load these are the only styles the page has. */
+      html, body { margin: 0; height: 100%; background: #0a0616; color: #fff; }
+      body {
+        font-family: ui-rounded, system-ui, -apple-system, 'Segoe UI', Roboto,
+          sans-serif;
+      }
+      #not-built {
+        min-height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      #not-built[hidden] { display: none; }
+      .nb__card {
+        max-width: 420px;
+        padding: 28px 24px;
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+      }
+      .nb__emoji { font-size: 46px; line-height: 1; }
+      .nb__card h1 {
+        font-size: 22px;
+        letter-spacing: -0.5px;
+        margin: 12px 0 10px;
+      }
+      .nb__card p { margin: 0 0 12px; line-height: 1.5; color: #b3a2dd; font-size: 14px; }
+      .nb__fix { color: #fff; }
+      .nb__card code, .nb__card em {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-style: normal;
+        font-size: 13px;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+
+    <!--
+      Shown only if the app never mounts. The usual cause is this source file
+      being served directly instead of the built output — GitHub Pages does
+      exactly that when its source is "Deploy from a branch", since the only
+      script below is TypeScript the browser cannot execute. Without this the
+      failure is a blank white page that explains nothing.
+
+      The real app replaces #root the moment React mounts, so this never
+      appears in a working build.
+    -->
+    <div id="not-built" hidden>
+      <div class="nb__card">
+        <div class="nb__emoji">🛠️</div>
+        <h1>This is the source page, not the built app</h1>
+        <p>
+          The app has to be compiled before it will run — the only script on
+          this page is TypeScript, which a browser can't execute.
+        </p>
+        <p class="nb__fix">
+          <strong>On GitHub Pages:</strong> set
+          <em>Settings ▸ Pages ▸ Build and deployment ▸ Source</em> to
+          <strong>GitHub Actions</strong>. The workflow in this repository
+          already builds and publishes the app.
+        </p>
+        <p class="nb__fix">
+          <strong>Locally:</strong> <code>npm install &amp;&amp; npm run dev</code>
+        </p>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.tsx"></script>
+
+    <!--
+      A classic (non-module) script, so it still runs when the module above
+      fails to load — which is the whole situation it exists to report.
+    -->
+    <script>
+      setTimeout(function () {
+        var root = document.getElementById('root');
+        if (root && root.childElementCount === 0) {
+          document.getElementById('not-built').hidden = false;
+        }
+      }, 2500);
+    </script>
   </body>
 </html>
