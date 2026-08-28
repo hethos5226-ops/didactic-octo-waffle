@@ -5,9 +5,9 @@ import { Avatar } from '../components/Avatar';
 import type { GroupSize } from '../state/types';
 
 const MODES: { size: GroupSize; emoji: string; label: string; hint: string }[] = [
-  { size: 1, emoji: '👤', label: 'SOLO', hint: 'you + 1' },
-  { size: 2, emoji: '👥', label: 'DUO', hint: 'you + a mate vs 2' },
-  { size: 3, emoji: '👥👥', label: 'TRIO', hint: '3 vs 3' },
+  { size: 1, emoji: '👤', label: 'SOLO', hint: '1 v 1' },
+  { size: 2, emoji: '👥', label: 'DUO', hint: '2 v 2' },
+  { size: 3, emoji: '👥👥', label: 'TRIO', hint: '3 v 3' },
 ];
 
 export function HomeScreen() {
@@ -116,7 +116,7 @@ export function HomeScreen() {
           className="home__friends"
           onClick={() => dispatch({ type: 'go', route: 'friends' })}
         >
-          👥 {profile.friends.length} friends — invite them to a lobby →
+          👥 {profile.friends.length} {profile.friends.length === 1 ? 'friend' : 'friends'} — invite them to a lobby →
         </button>
       )}
     </div>

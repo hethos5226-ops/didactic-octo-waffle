@@ -106,7 +106,7 @@ export function ProfileScreen() {
       </div>
 
       <div className="card profile__vibes">
-        <span className="eyebrow">THEIR ALGORITHM{isMe ? ' (YOURS)' : ''}</span>
+        <span className="eyebrow">{isMe ? 'YOUR ALGORITHM' : 'THEIR ALGORITHM'}</span>
         <div className="wrap">
           {vibes.map((v) => (
             <span
@@ -122,7 +122,7 @@ export function ProfileScreen() {
 
       {isMe && profile.friends.length > 0 && (
         <button className="btn btn--ghost btn--block" onClick={() => dispatch({ type: 'go', route: 'friends' })}>
-          👥 See your {profile.friends.length} friends
+          👥 See your {profile.friends.length} {profile.friends.length === 1 ? 'friend' : 'friends'}
         </button>
       )}
     </div>

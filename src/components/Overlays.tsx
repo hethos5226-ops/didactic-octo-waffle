@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { titleForLevel } from '../data/levels';
+import { LEVEL_TITLES, titleForLevel } from '../data/levels';
 import { Avatar } from './Avatar';
 import type { Member } from '../state/types';
 
@@ -53,6 +53,9 @@ interface LevelUpProps {
 
 export function LevelUpOverlay({ level, onDone }: LevelUpProps) {
   const title = titleForLevel(level);
+  // Levels 2, 3, 4 all read as "New Scroller", so the number alone can feel
+  // like nothing changed. Point at the next title instead.
+  const next = LEVEL_TITLES.find((t) => t.level > level);
   useEffect(() => {
     const timer = setTimeout(onDone, 4200);
     return () => clearTimeout(timer);
@@ -66,6 +69,11 @@ export function LevelUpOverlay({ level, onDone }: LevelUpProps) {
         <div className="levelup__emoji" aria-hidden>{title.emoji}</div>
         <div className="levelup__num">{level}</div>
         <div className="levelup__title">{title.title}</div>
+        {next && (
+          <div className="levelup__next">
+            {next.emoji} {next.title} at level {next.level}
+          </div>
+        )}
         <button className="btn btn--primary btn--lg" onClick={onDone}>Let's go 🚀</button>
       </div>
     </div>

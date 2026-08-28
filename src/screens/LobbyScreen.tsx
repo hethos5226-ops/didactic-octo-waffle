@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '../components/Avatar';
 import { LevelBadge } from '../components/LevelBadge';
+import { PEOPLE } from '../data/people';
 import { VIBES } from '../data/vibes';
-import { useStore } from '../state/store';
+import { memberFromPerson, strangers, useStore } from '../state/store';
 
 export function LobbyScreen() {
   const { state, dispatch } = useStore();
@@ -13,6 +14,31 @@ export function LobbyScreen() {
   // In a private lobby you are waiting on people; in a random one the match is
   // already made, so the button is live immediately.
   const canStart = session.members.length >= 2;
+
+  // Somebody has to walk through the door, or a private lobby is a code and a
+  // dead end. These stand in for the friends who tapped your invite link:
+  // people you have actually added come first, then the wider cast.
+  const arrivals = useRef(false);
+  useEffect(() => {
+    if (!isPrivate || arrivals.current) return;
+    arrivals.current = true;
+    const already = session.members.map((m) => m.id);
+    const invitedFriends = PEOPLE.filter(
+      (p) => state.profile!.friends.includes(p.id) && !already.includes(p.id),
+    );
+    const queue = [...invitedFriends, ...strangers(3, [...already, ...invitedFriends.map((f) => f.id)])]
+      .slice(0, Math.max(0, 3 - session.members.length));
+
+    const timers = queue.map((person, i) =>
+      window.setTimeout(
+        () => dispatch({ type: 'memberJoined', member: memberFromPerson(person, 'yours') }),
+        2200 + i * 2600,
+      ),
+    );
+    return () => timers.forEach(clearTimeout);
+    // Runs once when the lobby opens; later joins would arrive over the wire.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPrivate]);
 
   useEffect(() => {
     if (!copied) return;
@@ -93,8 +119,8 @@ export function LobbyScreen() {
         ))}
       </ul>
 
-      {isPrivate && session.members.length < 2 && (
-        <p className="lobby__waiting">Waiting for someone to join… 👀</p>
+      {isPrivate && session.members.length < 3 && (
+        <p className="lobby__waiting">Waiting for people to tap your link… 👀</p>
       )}
 
       <div className="lobby__order card">

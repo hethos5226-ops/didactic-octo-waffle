@@ -69,7 +69,7 @@ export function SummaryScreen() {
                 aria-label={`Like @${m.handle}'s profile`}
                 aria-pressed={liked}
               >
-                ❤️
+                {liked ? '❤️' : '🤍'}
               </button>
               <button
                 className={`btn ${friended ? 'btn--ghost' : 'btn--zap'} summary__add`}

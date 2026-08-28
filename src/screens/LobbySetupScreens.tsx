@@ -148,7 +148,9 @@ export function FriendsScreen() {
         <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
         <div className="grow">
           <h1 className="title">👥 Friends</h1>
-          <p className="subtitle">{friends.length} people you met by scrolling.</p>
+          <p className="subtitle">
+            {friends.length} {friends.length === 1 ? 'person' : 'people'} you met by scrolling.
+          </p>
         </div>
       </header>
 
