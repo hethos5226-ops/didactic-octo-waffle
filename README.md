@@ -11,6 +11,38 @@ that stranger listening to you laugh at it, is the whole idea.
 
 ---
 
+## See it running
+
+The repository is **private**, which affects the options:
+
+**GitHub Codespaces** — works today, nothing to publish. On the repo page:
+`Code ▸ Codespaces ▸ Create codespace`, then in its terminal:
+
+```bash
+npm install && npm run dev
+```
+
+Click the forwarded port when it pops up. Open the browser device toolbar and
+pick an iPhone, or open the forwarded URL on your phone.
+
+**GitHub Pages** — gives a permanent link, and `.github/workflows/pages.yml`
+is ready for it. Turn it on once at `Settings ▸ Pages ▸ Source: GitHub Actions`.
+Note that **Pages on a private repo needs a paid plan**; on the free plan the
+repo has to be public first, which puts the prototype on the open internet — so
+that is a deliberate choice, not a step to click through.
+
+**Download the build** — the same workflow always uploads a `scroll-prototype`
+artifact under the Actions tab, whether or not Pages is on. Unzip it and serve
+it locally:
+
+```bash
+npx serve scroll-prototype
+```
+
+(It needs a server — browsers block ES modules opened over `file://`.)
+
+---
+
 ## Run it
 
 ```bash
