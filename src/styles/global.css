@@ -268,7 +268,18 @@ ul { margin: 0; padding: 0; list-style: none; }
 }
 
 .chip:active { transform: scale(0.94); }
-.chip--on { background: var(--grad-hot); border-color: transparent; color: #fff; }
+/* Selected states paint a gradient behind a border that is set transparent.
+   With the default `background-clip: border-box` the gradient bleeds into that
+   1px ring, and because the border-box corner radius is a pixel larger than the
+   padding-box one, the bleed shows as squared-off slivers at the widest points
+   of the pill. Clipping to the padding box keeps the fill and the silhouette
+   the same shape. */
+.chip--on {
+  background: var(--grad-hot);
+  background-clip: padding-box;
+  border-color: transparent;
+  color: #fff;
+}
 
 .row { display: flex; align-items: center; gap: 10px; }
 .row--between { justify-content: space-between; }

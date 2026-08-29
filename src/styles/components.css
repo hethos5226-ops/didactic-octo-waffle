@@ -127,7 +127,7 @@
 }
 
 .vibe-card:active { transform: scale(0.93); }
-.vibe-card.is-on { border-color: transparent; transform: scale(1.03); }
+.vibe-card.is-on { border-color: transparent; background-clip: padding-box; transform: scale(1.03); }
 .vibe-card__emoji { font-size: 28px; font-family: var(--font-emoji); }
 .vibe-card__label { font-size: 11px; font-weight: 800; text-align: center; letter-spacing: -0.2px; }
 
@@ -879,7 +879,11 @@
   100% { transform: scale(1); }
 }
 
-.voicebar__btn--chat.is-on { background: var(--grad-hot); border-color: transparent; }
+.voicebar__btn--chat.is-on {
+  background: var(--grad-hot);
+  background-clip: padding-box;
+  border-color: transparent;
+}
 
 .voicebar__badge {
   position: absolute;
@@ -1669,6 +1673,7 @@
 
 .tag--on {
   background: var(--grad-hot);
+  background-clip: padding-box;
   border-color: transparent;
   color: #fff;
 }
