@@ -2,8 +2,15 @@
 
 **Meet someone. Watch their FYP. Laugh together. Rate their feed.**
 
-A prototype for a social app where you get matched with strangers, one person
-shares their short-form feed, and everyone watches and reacts to it together.
+**SCROLL is a party game you play by watching reels.**
+
+You get matched with people → one of you is picked as the Scroller → they share
+their feed → everyone watches the same thing at once, reacts live and talks over
+it → the room rates their feed → it rotates. Score, levels and friends all come
+out of *playing*.
+
+There is deliberately **no solo For You feed**. Watching alone is a different
+app; the reels are the material the game is played with, not the product.
 
 The content is not the product — **the reaction to someone else's algorithm
 is**. Watching what the internet has decided a stranger in Osaka is like, with
@@ -201,8 +208,8 @@ HOME  →  match (solo / duo / trio)  →  LOBBY  →  "🎬 JAKE IS SCROLLING!"
 | Premium | ✅ removes ads, claims the first turn, crown badge |
 | Welcome / sign-in | ✅ Apple + Google wired but unconfigured; email works locally |
 | Onboarding | ✅ username, display name, photo, bio, interests, intro |
-| Tab navigation | ✅ Home · Discover · Create · Activity · Profile |
-| Discover | ✅ search people/tags/videos, trending, suggested creators |
+| Tab navigation | ✅ Home · Profile · **PLAY!** · Activity · Settings |
+| Match history | ✅ every game is kept and shown in Activity |
 | Reel viewer | ✅ real video, autoplay, tap-pause, mute, like/save/share/follow |
 | Profile content | ✅ followers, following, posts / liked / saved grids |
 
@@ -210,6 +217,23 @@ Everything persists to `localStorage`, so your level and Feed Score are still
 there when you come back.
 
 ---
+
+## Navigation
+
+**Home · Profile · PLAY! · Activity · Settings.**
+
+PLAY sits in the middle and is the loudest thing in the bar, because starting a
+game is what the app is *for* — the other four are places you go between games.
+It opens the modes as a sheet rather than routing to a screen, so a game can
+start from wherever you are.
+
+Activity leads with **your last games** — the scoreboard, who played, what your
+feed scored — above friend requests. A match is the unit of play, so it is the
+thing worth remembering; sessions used to be discarded the moment they ended.
+
+The reel viewer is reached from a profile's grid, not from a feed tab. It is
+"look at what this person posted", and it is the surface the shared in-session
+feed will be built on.
 
 ## About the reels
 

@@ -11,7 +11,7 @@ import {
 } from './scoring';
 import type {
   AppNotification, AppState, CategoryId, GroupSize, LobbyMode, Member, Profile,
-  RoundResult, Route, Tab,
+  MatchSummary, RoundResult, Route, SessionState, Tab,
 } from './types';
 import { clearStoredAccount, type AuthAccount } from '../auth/providers';
 
@@ -41,6 +41,7 @@ function loadProfile(): Profile | null {
     parsed.likedVideos = parsed.likedVideos ?? [];
     parsed.savedVideos = parsed.savedVideos ?? [];
     parsed.uploadedVideos = parsed.uploadedVideos ?? [];
+    parsed.matchHistory = parsed.matchHistory ?? [];
     parsed.onboarded = parsed.onboarded ?? true;
     return parsed;
   } catch {
@@ -93,6 +94,7 @@ export function newProfile(input: {
     likedVideos: [],
     savedVideos: [],
     uploadedVideos: [],
+    matchHistory: [],
     onboarded: true,
     sessionsPlayed: 0,
     roundsScrolled: 0,
@@ -115,6 +117,31 @@ function seedSocial(): Pick<Profile, 'incomingRequests' | 'sentRequests' | 'noti
 
 function notify(kind: AppNotification['kind'], fromId: string): AppNotification {
   return { id: ++notificationId, kind, fromId, at: Date.now(), read: false };
+}
+
+/** Turn a finished session into the record that outlives it. */
+function summariseMatch(session: SessionState): MatchSummary {
+  const rounds = session.results.map((r) => ({
+    handle: r.scrollerHandle,
+    isMe: r.isMe,
+    feedScore: r.feedScore,
+  }));
+  const best = [...rounds].sort((a, b) => b.feedScore - a.feedScore)[0];
+  const mine = rounds.find((r) => r.isMe);
+  return {
+    id: `m_${Date.now().toString(36)}`,
+    at: Date.now(),
+    mode: session.mode,
+    players: session.members.map((m) => ({
+      id: m.id, handle: m.handle, avatar: m.avatar, colour: m.colour, isMe: m.isMe,
+    })),
+    rounds,
+    myFeedScore: mine?.feedScore ?? null,
+    bestHandle: best?.handle ?? '',
+    bestScore: best?.feedScore ?? 0,
+    totalReactions: session.results.reduce((n, r) => n + r.totalReactions, 0),
+    xpEarned: session.results.reduce((n, r) => n + r.xpTotal, 0) + XP.sessionComplete,
+  };
 }
 
 function memberFromPerson(p: Person, team: 'yours' | 'theirs'): Member {
@@ -485,12 +512,16 @@ function reducer(state: AppState, action: Action): AppState {
     }
 
     case 'finishSession': {
-      if (!state.profile) return state;
+      if (!state.profile || !state.session) return state;
       const levelBefore = progressionFromXp(state.profile.xp).level;
+      const summary = summariseMatch(state.session);
       const profile = {
         ...state.profile,
         xp: state.profile.xp + XP.sessionComplete,
         sessionsPlayed: state.profile.sessionsPlayed + 1,
+        // Capped: a history that grows forever would eventually blow the
+        // localStorage budget the profile shares with the photo.
+        matchHistory: [summary, ...state.profile.matchHistory].slice(0, 20),
       };
       const levelAfter = progressionFromXp(profile.xp).level;
       return {
@@ -649,10 +680,11 @@ function reducer(state: AppState, action: Action): AppState {
     case 'setTab': {
       const routeForTab: Record<Tab, Route> = {
         home: 'home',
-        discover: 'discover',
-        create: 'create',
-        activity: 'notifications',
         profile: 'profile',
+        // PLAY is an action, handled by the tab bar itself; it never routes.
+        play: 'home',
+        activity: 'notifications',
+        settings: 'settings',
       };
       return {
         ...state,

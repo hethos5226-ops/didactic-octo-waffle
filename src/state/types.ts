@@ -54,6 +54,8 @@ export interface Profile {
   likedVideos: string[];
   savedVideos: string[];
   uploadedVideos: string[];
+  /** Newest first, capped — see the store. */
+  matchHistory: MatchSummary[];
   /** True once the intro cards have been through, so returning users skip. */
   onboarded: boolean;
   /** People who liked or friended you, newest first — shown on the profile. */
@@ -72,6 +74,29 @@ export interface AppNotification {
   fromId: string;
   at: number;
   read: boolean;
+}
+
+/**
+ * What happened in one game, kept after the session ends.
+ *
+ * Sessions used to be discarded the moment they finished, which meant the
+ * thing you just spent ten minutes on left no trace. A match is the unit of
+ * play in SCROLL, so it is the thing worth remembering.
+ */
+export interface MatchSummary {
+  id: string;
+  at: number;
+  mode: 'random' | 'private';
+  /** Everyone who was in the room, you included. */
+  players: { id: string; handle: string; avatar: string; colour: string; isMe: boolean }[];
+  /** One entry per round, in the order they scrolled. */
+  rounds: { handle: string; isMe: boolean; feedScore: number }[];
+  /** Your own round, if you had one. */
+  myFeedScore: number | null;
+  bestHandle: string;
+  bestScore: number;
+  totalReactions: number;
+  xpEarned: number;
 }
 
 export type LobbyMode = 'random' | 'private';
@@ -148,14 +173,16 @@ export interface SessionState {
 }
 
 /** The five permanent destinations. Everything else opens over the top. */
-export type Tab = 'home' | 'discover' | 'create' | 'activity' | 'profile';
+/**
+ * Home, Profile, PLAY, Activity, Settings. PLAY sits in the middle because
+ * starting a game is the point of the app, not one destination among five.
+ */
+export type Tab = 'home' | 'profile' | 'play' | 'activity' | 'settings';
 
 export type Route =
   | 'welcome'
   | 'emailAuth'
   | 'onboarding'
-  | 'discover'
-  | 'create'
   | 'reels'
   | 'auth'
   | 'home'

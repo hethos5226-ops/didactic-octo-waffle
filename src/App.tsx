@@ -3,8 +3,6 @@ import { WelcomeScreen } from './screens/WelcomeScreen';
 import { EmailAuthScreen } from './screens/EmailAuthScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { HomeScreen } from './screens/HomeScreen';
-import { DiscoverScreen } from './screens/DiscoverScreen';
-import { CreateScreen } from './screens/CreateScreen';
 import { ReelsScreen } from './screens/ReelsScreen';
 import { MatchmakingScreen } from './screens/MatchmakingScreen';
 import { LobbyScreen } from './screens/LobbyScreen';
@@ -29,7 +27,7 @@ import type { Route } from './state/types';
  * stranger's profile — takes the whole screen, because a tab bar under an
  * immersive video or a live lobby is a way to lose people mid-experience.
  */
-const TAB_ROUTES: Route[] = ['home', 'discover', 'create', 'notifications'];
+const TAB_ROUTES: Route[] = ['home', 'notifications', 'settings'];
 
 /** These need a session in state; landing on one without is a broken screen. */
 const SESSION_ROUTES: Route[] = ['lobby', 'announce', 'session', 'rating', 'results', 'summary'];
@@ -61,8 +59,6 @@ function Router() {
 
   switch (route) {
     case 'home': return <HomeScreen />;
-    case 'discover': return <DiscoverScreen />;
-    case 'create': return <CreateScreen />;
     case 'reels': return <ReelsScreen />;
     case 'matchmaking': return <MatchmakingScreen />;
     case 'lobby': return session ? <LobbyScreen /> : <HomeScreen />;

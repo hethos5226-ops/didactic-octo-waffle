@@ -9,7 +9,7 @@ import { mutualFriends } from '../data/social';
 import { useState } from 'react';
 import { reelsByCreator } from '../data/reels';
 import { formatCount } from '../data/content';
-import { VideoGrid } from './DiscoverScreen';
+import { VideoGrid } from '../components/VideoGrid';
 import { feedScoreFrom, percentages } from '../state/scoring';
 import { useStore } from '../state/store';
 import type { CategoryId } from '../state/types';
@@ -77,13 +77,6 @@ export function ProfileScreen() {
           <div className="row profile__nav-actions">
             <button className="profile__edit" onClick={() => dispatch({ type: 'go', route: 'editProfile' })}>
               Edit
-            </button>
-            <button
-              className="profile__settings"
-              onClick={() => dispatch({ type: 'go', route: 'settings' })}
-              aria-label="Settings"
-            >
-              ⚙️
             </button>
           </div>
         )}
@@ -202,7 +195,12 @@ export function ProfileScreen() {
 
       <div className="profile__stats">
         <Stat emoji="❤️" value={isMe ? profile.profileLikes : 1284} label="Profile likes" />
-        <Stat emoji="👥" value={isMe ? profile.friends.length : 48} label="Friends" />
+        <Stat
+          emoji="👥"
+          value={isMe ? profile.friends.length : 48}
+          label="Friends"
+          onClick={isMe ? () => dispatch({ type: 'go', route: 'friends' }) : undefined}
+        />
         <Stat emoji="🎬" value={isMe ? profile.roundsScrolled : 96} label="Rounds scrolled" />
         <Stat emoji="✨" value={isMe ? profile.reactionsReceived : 5401} label="Reactions got" />
       </div>
@@ -332,23 +330,33 @@ export function ProfileScreen() {
         </button>
       )}
 
-      {isMe && profile.friends.length > 0 && (
-        <button className="btn btn--ghost btn--block" onClick={() => dispatch({ type: 'go', route: 'friends' })}>
-          👥 See your {profile.friends.length} {profile.friends.length === 1 ? 'friend' : 'friends'}
-        </button>
-      )}
 
     </div>
   );
 }
 
-function Stat({ emoji, value, label }: { emoji: string; value: number; label: string }) {
-  return (
-    <div className="stat">
+interface StatProps {
+  emoji: string;
+  value: number;
+  label: string;
+  /** Given a handler, the tile becomes the way into that thing. */
+  onClick?: () => void;
+}
+
+function Stat({ emoji, value, label, onClick }: StatProps) {
+  const content = (
+    <>
       <span className="stat__emoji" aria-hidden>{emoji}</span>
       <span className="stat__value">{value.toLocaleString()}</span>
       <span className="stat__label">{label}</span>
-    </div>
+    </>
+  );
+  if (!onClick) return <div className="stat">{content}</div>;
+  return (
+    <button className="stat stat--tappable" onClick={onClick}>
+      {content}
+      <span className="stat__chevron" aria-hidden>›</span>
+    </button>
   );
 }
 

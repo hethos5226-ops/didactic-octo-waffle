@@ -17,21 +17,12 @@ export function HomeScreen() {
   const progress = progressionFromXp(profile.xp);
   const title = titleForLevel(progress.level);
   const score = feedScoreFrom(percentages(profile.tallies));
-  const unread = profile.notifications.filter((n) => !n.read).length;
 
   return (
     <div className="screen home">
       <header className="home__head">
         <h1 className="wordmark">SCROLL</h1>
         <div className="row home__head-actions">
-        <button
-          className="home__bell"
-          onClick={() => dispatch({ type: 'go', route: 'notifications' })}
-          aria-label={unread > 0 ? `Activity, ${unread} new` : 'Activity'}
-        >
-          🔔
-          {unread > 0 && <span className="home__bell-dot">{unread > 9 ? '9+' : unread}</span>}
-        </button>
 
         <button
           className="home__me"
@@ -49,18 +40,6 @@ export function HomeScreen() {
         </button>
         </div>
       </header>
-
-      {/* The reel feed. Watching alone is the low-commitment way in — you can
-          open SCROLL and have something to look at without waiting to be
-          matched with anyone. */}
-      <button className="home__reels" onClick={() => dispatch({ type: 'go', route: 'reels' })}>
-        <span className="home__reels-play" aria-hidden>▶</span>
-        <span className="grow home__reels-body">
-          <span className="home__reels-title">WATCH REELS</span>
-          <span className="tiny">Scroll on your own. Save what you like.</span>
-        </span>
-        <span className="home__reels-arrow" aria-hidden>›</span>
-      </button>
 
       {/* RANDOM — the headline action. Deliberately the biggest, brightest
           thing on the screen; everything else is secondary to "meet someone". */}

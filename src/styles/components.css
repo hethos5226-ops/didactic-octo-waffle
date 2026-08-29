@@ -250,7 +250,7 @@
 }
 
 .home__friends {
-  padding: 12px;
+  padding: 12px 44px 12px 12px;
   border-radius: var(--r-md);
   background: var(--surface);
   border: 1px dashed var(--stroke-strong);
@@ -2952,3 +2952,131 @@
 
 .profile__content-tab.is-on { background: var(--surface-2); color: var(--text); }
 .profile__private { text-align: center; padding: 22px 10px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TAB BAR — PLAY at the centre
+   ═══════════════════════════════════════════════════════════════ */
+
+/* PLAY is the loudest thing in the bar because starting a game is what the
+   app is for; the other four are places you go between games. */
+.tabbar__play {
+  position: relative;
+  flex: none;
+  padding: 11px 20px;
+  border-radius: 999px;
+  background: var(--grad-hot);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  box-shadow: 0 8px 22px -10px rgba(255, 46, 147, 0.95);
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+  overflow: hidden;
+}
+
+.tabbar__play:active { transform: scale(0.92); }
+
+.tabbar__play-glow {
+  position: absolute;
+  inset: -60%;
+  background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.4), transparent 40%);
+  animation: spin-slow 4s linear infinite;
+}
+
+.tabbar__play-text { position: relative; }
+
+.play__modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+
+.play__mode {
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  padding: 15px 4px;
+}
+
+.play__mode:active { background: var(--surface-2); }
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTIVITY — match summaries
+   ═══════════════════════════════════════════════════════════════ */
+
+.activity__section { display: flex; flex-direction: column; gap: 10px; }
+.activity__matches { display: flex; flex-direction: column; gap: 12px; }
+
+.activity__match {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  background: linear-gradient(140deg, rgba(255, 46, 147, 0.1), rgba(123, 47, 247, 0.08));
+  border: 1px solid var(--stroke);
+}
+
+.activity__match-top { display: flex; align-items: center; justify-content: space-between; }
+.activity__match-mode { font-size: 13px; font-weight: 900; letter-spacing: 0.3px; }
+.activity__match-players { display: flex; align-items: center; gap: 0; }
+
+.activity__match-face {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-right: -7px;
+  border: 2px solid;
+  background: #1b1030;
+  font-size: 14px;
+  font-family: var(--font-emoji);
+  flex: none;
+}
+
+.activity__match-count { margin-left: 16px; }
+.activity__match-scores { display: flex; flex-direction: column; gap: 5px; }
+
+.activity__score {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 11px;
+  border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.activity__score.is-me {
+  background: rgba(198, 255, 61, 0.12);
+  border: 1px solid rgba(198, 255, 61, 0.35);
+}
+
+.activity__score-rank { font-size: 12px; font-weight: 900; color: var(--dim); width: 18px; font-family: var(--font-emoji); }
+.activity__score-num { font-weight: 900; }
+
+.activity__match-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.activity__match-foot strong { color: var(--yellow); }
+
+/* A stat tile that is also the way into the thing it counts. */
+.stat--tappable {
+  position: relative;
+  transition: transform 130ms, background 160ms;
+}
+
+.stat--tappable:active { transform: scale(0.95); background: var(--surface-2); }
+
+.stat__chevron {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 15px;
+  color: var(--dim);
+}

@@ -7,7 +7,11 @@ import { formatCount, timeSince } from '../data/content';
 import { useStore } from '../state/store';
 
 /**
- * The full-screen vertical feed.
+ * The full-screen vertical viewer.
+ *
+ * Reached from a profile's grid — SCROLL has no solo For You feed, because
+ * watching alone is a different app. This is "look at what this person
+ * posted", and it is the surface the shared in-session feed will be built on.
  *
  * Paging is CSS scroll-snap over a native scroller rather than a JS-driven
  * transform: it inherits the platform's own momentum, rubber-banding and
@@ -64,8 +68,7 @@ export function ReelsScreen() {
           ‹
         </button>
         <div className="reels__tabs">
-          <span className="reels__tab is-on">For You</span>
-          <span className="reels__tab">Following</span>
+          <span className="reels__tab is-on">Posts</span>
         </div>
         <button
           className="reels__mute"
