@@ -76,6 +76,21 @@ throughout. The UI says which mode it is in rather than implying otherwise.
 That is everything email sign-in needs. It creates the tables, the row-level
 security policies, the follower-count trigger and the `avatars` storage bucket.
 
+### 1b. Check it worked
+
+```bash
+npm run check:backend
+```
+
+Verifies the variables are set, the project is reachable, all five tables and
+the storage bucket exist, and — importantly — that row-level security is
+actually rejecting anonymous writes. It also refuses to run at all if it
+detects a service-role key in `.env.local`, and reports whether Google and
+Apple are switched on yet.
+
+It uses the public anon key only. It never asks for the service-role key or the
+database password.
+
 > The `anon` key is public and safe to ship. The **service-role key is not** —
 > it bypasses row-level security completely and must never appear in the app.
 
