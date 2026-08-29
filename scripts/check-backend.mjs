@@ -70,9 +70,17 @@ const url = (env.VITE_SUPABASE_URL ?? '').trim();
 const key = (env.VITE_SUPABASE_ANON_KEY ?? '').trim();
 
 if (!url || !key) {
+  // Naming the specific variable matters: "create .env.local" is unhelpful
+  // when the file is already there and only one value is blank.
+  const missing = [!url && 'VITE_SUPABASE_URL', !key && 'VITE_SUPABASE_ANON_KEY'].filter(Boolean);
+  const hasFile = readEnvFile('.env.local') !== null;
   fail(
-    'VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are not both set',
-    'Create .env.local (copy .env.example) and fill both in from\n        Supabase → Project Settings → API.',
+    `${missing.join(' and ')} ${missing.length > 1 ? 'are' : 'is'} not set`,
+    hasFile
+      ? 'The .env.local file exists — paste the value in from\n' +
+        '        Supabase → Project Settings → API → anon / publishable key.'
+      : 'Create .env.local (copy .env.example) and fill it in from\n' +
+        '        Supabase → Project Settings → API.',
   );
   console.log('\nNothing else can be checked without them.\n');
   process.exit(1);
