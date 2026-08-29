@@ -5,3 +5,8 @@ dist-ssr
 .DS_Store
 .vite
 *.tsbuildinfo
+
+# Real credentials never get committed; .env.example documents the shape.
+.env
+.env.local
+.env.*.local

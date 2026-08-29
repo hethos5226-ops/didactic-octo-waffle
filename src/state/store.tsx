@@ -11,8 +11,9 @@ import {
 } from './scoring';
 import type {
   AppNotification, AppState, CategoryId, GroupSize, LobbyMode, Member, Profile,
-  RoundResult, Route,
+  RoundResult, Route, Tab,
 } from './types';
+import { clearStoredAccount, type AuthAccount } from '../auth/providers';
 
 const STORAGE_KEY = 'scroll.profile.v1';
 
@@ -31,6 +32,16 @@ function loadProfile(): Profile | null {
     parsed.incomingRequests = parsed.incomingRequests ?? [];
     parsed.sentRequests = parsed.sentRequests ?? [];
     parsed.notifications = parsed.notifications ?? [];
+    parsed.displayName = parsed.displayName || parsed.handle;
+    parsed.bio = parsed.bio ?? '';
+    parsed.authProvider = parsed.authProvider ?? null;
+    parsed.email = parsed.email ?? null;
+    parsed.following = parsed.following ?? [];
+    parsed.followerCount = parsed.followerCount ?? 0;
+    parsed.likedVideos = parsed.likedVideos ?? [];
+    parsed.savedVideos = parsed.savedVideos ?? [];
+    parsed.uploadedVideos = parsed.uploadedVideos ?? [];
+    parsed.onboarded = parsed.onboarded ?? true;
     return parsed;
   } catch {
     return null;
@@ -47,12 +58,18 @@ function saveProfile(profile: Profile | null) {
 }
 
 export function newProfile(input: {
-  handle: string; avatar: string; photo: string | null; colour: string;
+  handle: string; displayName: string; bio: string;
+  avatar: string; photo: string | null; colour: string;
   country: string; flag: string; vibes: VibeId[]; hashtags: string[];
+  authProvider: Profile['authProvider']; email: string | null;
 }): Profile {
   return {
     id: 'me',
     handle: input.handle,
+    displayName: input.displayName || input.handle,
+    bio: input.bio,
+    authProvider: input.authProvider,
+    email: input.email,
     avatar: input.avatar,
     photo: input.photo,
     colour: input.colour,
@@ -69,6 +86,14 @@ export function newProfile(input: {
     // for, so two people are already waiting. In a real build these arrive
     // from the server.
     ...seedSocial(),
+    // A brand-new account follows nobody. The follower count is simulated
+    // because there is no server to count anything.
+    following: [],
+    followerCount: 0,
+    likedVideos: [],
+    savedVideos: [],
+    uploadedVideos: [],
+    onboarded: true,
     sessionsPlayed: 0,
     roundsScrolled: 0,
     reactionsSent: 0,
@@ -144,6 +169,11 @@ export function makeLobbyCode(): string {
 
 export type Action =
   | { type: 'signUp'; profile: Profile }
+  | { type: 'signedIn'; account: AuthAccount }
+  | { type: 'setTab'; tab: Tab }
+  | { type: 'toggleLike'; videoId: string }
+  | { type: 'toggleSave'; videoId: string }
+  | { type: 'toggleFollow'; id: string }
   | { type: 'signOut' }
   | { type: 'go'; route: Route }
   | { type: 'back' }
@@ -181,7 +211,9 @@ export type Action =
 
 export const initialState: AppState = {
   profile: null,
-  route: 'auth',
+  account: null,
+  route: 'welcome',
+  tab: 'home',
   history: [],
   viewingPersonId: null,
   matchmakingSize: 1,
@@ -206,9 +238,10 @@ function toast(emoji: string, text: string) {
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'signUp':
-      return { ...state, profile: action.profile, route: 'home', history: [] };
+      return { ...state, profile: action.profile, route: 'home', tab: 'home', history: [] };
 
     case 'signOut':
+      clearStoredAccount();
       return { ...initialState };
 
     case 'go':
@@ -601,6 +634,81 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'signedIn': {
+      // A returning account already has a profile, so onboarding is skipped.
+      const hasProfile = Boolean(state.profile);
+      return {
+        ...state,
+        account: action.account,
+        route: hasProfile ? 'home' : 'onboarding',
+        tab: 'home',
+        history: [],
+      };
+    }
+
+    case 'setTab': {
+      const routeForTab: Record<Tab, Route> = {
+        home: 'home',
+        discover: 'discover',
+        create: 'create',
+        activity: 'notifications',
+        profile: 'profile',
+      };
+      return {
+        ...state,
+        tab: action.tab,
+        route: routeForTab[action.tab],
+        // Tabs are roots, not stops on a journey — switching clears the stack
+        // so back never walks sideways through tabs.
+        history: [],
+        viewingPersonId: action.tab === 'profile' ? null : state.viewingPersonId,
+      };
+    }
+
+    case 'toggleLike': {
+      if (!state.profile) return state;
+      const liked = state.profile.likedVideos.includes(action.videoId);
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          likedVideos: liked
+            ? state.profile.likedVideos.filter((id) => id !== action.videoId)
+            : [...state.profile.likedVideos, action.videoId],
+        },
+      };
+    }
+
+    case 'toggleSave': {
+      if (!state.profile) return state;
+      const saved = state.profile.savedVideos.includes(action.videoId);
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          savedVideos: saved
+            ? state.profile.savedVideos.filter((id) => id !== action.videoId)
+            : [...state.profile.savedVideos, action.videoId],
+        },
+      };
+    }
+
+    case 'toggleFollow': {
+      if (!state.profile) return state;
+      const following = state.profile.following.includes(action.id);
+      const person = PEOPLE.find((p) => p.id === action.id);
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          following: following
+            ? state.profile.following.filter((id) => id !== action.id)
+            : [...state.profile.following, action.id],
+        },
+        toast: following ? null : toast('➕', `Following @${person?.handle ?? action.id}`),
+      };
+    }
+
     case 'buyPremium': {
       if (!state.profile) return state;
       return {
@@ -660,11 +768,21 @@ const StoreContext = createContext<Store | null>(null);
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
+    // A stored profile means both signed in and onboarded, so a returning
+    // user lands straight on Home.
     const profile = loadProfile();
     return {
       ...initialState,
       profile,
-      route: profile ? ('home' as Route) : ('auth' as Route),
+      account: profile
+        ? {
+            userId: profile.id,
+            provider: profile.authProvider ?? 'email',
+            email: profile.email,
+            suggestedName: profile.displayName,
+          }
+        : null,
+      route: profile ? ('home' as Route) : ('welcome' as Route),
       history: [],
     };
   });

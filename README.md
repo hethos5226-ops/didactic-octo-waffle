@@ -43,6 +43,40 @@ npx serve scroll-prototype
 
 ---
 
+## Configuring real sign-in
+
+Apple and Google are wired up to the point where **only credentials are
+missing**: the buttons, the call, the result handling and the error surface all
+exist in `src/auth/providers.ts`. What they deliberately do *not* do is pretend
+to succeed — tapping one today opens a sheet listing what is still needed. A
+fake "signed in with Apple" would hide the work still to do, and that is the
+kind of thing that quietly ships.
+
+Copy `.env.example` to `.env.local` and fill in:
+
+### Sign in with Apple
+1. **A paid Apple Developer Program membership** — $99/year. There is no free tier for this.
+2. A **Services ID** (not an App ID) with "Sign in with Apple" enabled.
+3. A **private key (.p8)**, plus its **Key ID** and your **Team ID**.
+4. `VITE_APPLE_CLIENT_ID` and `VITE_APPLE_REDIRECT_URI`.
+5. **A server endpoint.** Apple's client secret is a JWT you sign with the .p8
+   key. That key can never go in the app — anything bundled into the client is
+   readable by anyone who opens the site.
+
+### Sign in with Google
+1. A **Google Cloud project** with an OAuth consent screen configured.
+2. An **OAuth 2.0 Client ID** (iOS and/or Web).
+3. `VITE_GOOGLE_CLIENT_ID` and `VITE_GOOGLE_REDIRECT_URI`.
+4. Your redirect URI added to that client's allowed list.
+5. **A server endpoint** to verify the ID token. Verifying it in the browser
+   proves nothing — anyone can send you any token.
+
+Both need the same thing before they are real: a backend. Until then, **email
+sign-in works** but is device-local — no verification, no password reset, and
+signing out erases it. The UI says so rather than implying otherwise.
+
+---
+
 ## Run it
 
 ```bash
@@ -165,11 +199,35 @@ HOME  →  match (solo / duo / trio)  →  LOBBY  →  "🎬 JAKE IS SCROLLING!"
 | Profile photo | ✅ photo or emoji face, cropped and downscaled on device |
 | Interest hashtags | ✅ `#dogs` `#brainrot`, suggested or typed |
 | Premium | ✅ removes ads, claims the first turn, crown badge |
+| Welcome / sign-in | ✅ Apple + Google wired but unconfigured; email works locally |
+| Onboarding | ✅ username, display name, photo, bio, interests, intro |
+| Tab navigation | ✅ Home · Discover · Create · Activity · Profile |
+| Discover | ✅ search people/tags/videos, trending, suggested creators |
+| Reel viewer | ✅ real video, autoplay, tap-pause, mute, like/save/share/follow |
+| Profile content | ✅ followers, following, posts / liked / saved grids |
 
 Everything persists to `localStorage`, so your level and Feed Score are still
 there when you come back.
 
 ---
+
+## About the reels
+
+The six clips in `public/videos/` are **generated for this prototype** with
+ffmpeg — animated gradients, nobody's content. They are real H.264/VP9 files
+rather than CSS animations on purpose: the player's autoplay, pause, seek, loop
+and mute are the browser's own behaviour, so swapping in uploaded video changes
+only the URLs.
+
+Each ships as **both MP4/H.264 and WebM/VP9**. That is not belt-and-braces —
+Safari and iOS need H.264, while Chromium builds without proprietary codecs
+(plain Chromium, many Linux browsers) can only decode VP9. Offering both as
+`<source>` elements lets each browser take the one it can play; this was found
+by the video silently failing to load in exactly such a browser.
+
+Autoplay only works muted. That is a browser rule, not a preference: an unmuted
+`play()` outside a user gesture is rejected, so the feed starts muted and the
+first tap on the speaker is what grants sound.
 
 ## About the feeds
 

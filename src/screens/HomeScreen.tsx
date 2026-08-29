@@ -50,6 +50,18 @@ export function HomeScreen() {
         </div>
       </header>
 
+      {/* The reel feed. Watching alone is the low-commitment way in — you can
+          open SCROLL and have something to look at without waiting to be
+          matched with anyone. */}
+      <button className="home__reels" onClick={() => dispatch({ type: 'go', route: 'reels' })}>
+        <span className="home__reels-play" aria-hidden>▶</span>
+        <span className="grow home__reels-body">
+          <span className="home__reels-title">WATCH REELS</span>
+          <span className="tiny">Scroll on your own. Save what you like.</span>
+        </span>
+        <span className="home__reels-arrow" aria-hidden>›</span>
+      </button>
+
       {/* RANDOM — the headline action. Deliberately the biggest, brightest
           thing on the screen; everything else is secondary to "meet someone". */}
       <section className="home__random">

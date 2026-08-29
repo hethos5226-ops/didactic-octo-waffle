@@ -1,5 +1,6 @@
 import type { VibeId } from '../data/vibes';
 import type { XpAward } from '../data/levels';
+import type { AuthAccount } from '../auth/providers';
 
 export type CategoryId = 'funny' | 'chaotic' | 'fire' | 'wtf' | 'good';
 
@@ -13,7 +14,14 @@ export type Tallies = Record<CategoryId, CategoryTally>;
 
 export interface Profile {
   id: string;
+  /** @username — unique, lowercase, no spaces. */
   handle: string;
+  /** The name shown above the handle; free-form, may repeat across accounts. */
+  displayName: string;
+  bio: string;
+  /** Which provider the account came from, for the settings screen. */
+  authProvider: 'apple' | 'google' | 'email' | null;
+  email: string | null;
   /** Emoji face — always set, and the fallback whenever a photo is missing. */
   avatar: string;
   /** Optional profile photo as a downscaled data URL. */
@@ -34,6 +42,20 @@ export interface Profile {
   /** People you have asked, still waiting on them. */
   sentRequests: string[];
   notifications: AppNotification[];
+
+  /* ── Content graph ──────────────────────────────────────────────────
+     Following is separate from friends on purpose: friends are who you
+     watch WITH (lobbies, invites), following is whose content you see.
+     Collapsing them would mean following a stranger's reel also put them
+     in your lobby invite list. */
+  following: string[];
+  /** Simulated inbound count; there is no server to compute a real one. */
+  followerCount: number;
+  likedVideos: string[];
+  savedVideos: string[];
+  uploadedVideos: string[];
+  /** True once the intro cards have been through, so returning users skip. */
+  onboarded: boolean;
   /** People who liked or friended you, newest first — shown on the profile. */
   sessionsPlayed: number;
   roundsScrolled: number;
@@ -125,7 +147,16 @@ export interface SessionState {
   claimedFirst: boolean;
 }
 
+/** The five permanent destinations. Everything else opens over the top. */
+export type Tab = 'home' | 'discover' | 'create' | 'activity' | 'profile';
+
 export type Route =
+  | 'welcome'
+  | 'emailAuth'
+  | 'onboarding'
+  | 'discover'
+  | 'create'
+  | 'reels'
   | 'auth'
   | 'home'
   | 'matchmaking'
@@ -146,7 +177,10 @@ export type Route =
 
 export interface AppState {
   profile: Profile | null;
+  /** Set by sign-in, before onboarding has produced a profile. */
+  account: AuthAccount | null;
   route: Route;
+  tab: Tab;
   /**
    * Where "back" goes. Hard-coding each screen's back target meant Settings ▸
    * Get Premium ▸ back landed on the profile rather than back in Settings —

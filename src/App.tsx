@@ -1,6 +1,11 @@
 import { useEffect } from 'react';
-import { AuthScreen } from './screens/AuthScreen';
+import { WelcomeScreen } from './screens/WelcomeScreen';
+import { EmailAuthScreen } from './screens/EmailAuthScreen';
+import { OnboardingScreen } from './screens/OnboardingScreen';
 import { HomeScreen } from './screens/HomeScreen';
+import { DiscoverScreen } from './screens/DiscoverScreen';
+import { CreateScreen } from './screens/CreateScreen';
+import { ReelsScreen } from './screens/ReelsScreen';
 import { MatchmakingScreen } from './screens/MatchmakingScreen';
 import { LobbyScreen } from './screens/LobbyScreen';
 import { SessionScreen } from './screens/SessionScreen';
@@ -14,40 +19,66 @@ import { NotificationsScreen } from './screens/NotificationsScreen';
 import { PremiumScreen } from './screens/PremiumScreen';
 import { EditProfileScreen } from './screens/EditProfileScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
+import { TabBar } from './components/TabBar';
 import { LevelUpOverlay, ScrollerAnnouncement, Toast } from './components/Overlays';
 import { currentScroller, StoreProvider, useStore } from './state/store';
+import type { Route } from './state/types';
+
+/**
+ * Routes that show the tab bar. Everything else — a session, a sheet, a
+ * stranger's profile — takes the whole screen, because a tab bar under an
+ * immersive video or a live lobby is a way to lose people mid-experience.
+ */
+const TAB_ROUTES: Route[] = ['home', 'discover', 'create', 'notifications'];
+
+/** These need a session in state; landing on one without is a broken screen. */
+const SESSION_ROUTES: Route[] = ['lobby', 'announce', 'session', 'rating', 'results', 'summary'];
 
 function Router() {
   const { state, dispatch } = useStore();
   const { route, session } = state;
 
-  // A session can only be entered with a profile behind it; guard the routes
-  // that assume one rather than letting a refresh land on a broken screen.
+  // Guard the routes that assume state they may not have, so a refresh or a
+  // stale history entry lands somewhere coherent instead of on a blank screen.
   useEffect(() => {
-    if (!state.profile && route !== 'auth') dispatch({ type: 'go', route: 'auth' });
-    const needsSession = ['lobby', 'announce', 'session', 'rating', 'results', 'summary'];
-    if (!session && needsSession.includes(route)) dispatch({ type: 'go', route: 'home' });
-  }, [state.profile, session, route, dispatch]);
+    if (!state.profile) {
+      const preAuth: Route[] = ['welcome', 'emailAuth', 'onboarding'];
+      if (!preAuth.includes(route)) {
+        dispatch({ type: 'go', route: state.account ? 'onboarding' : 'welcome' });
+      }
+      return;
+    }
+    if (!session && SESSION_ROUTES.includes(route)) dispatch({ type: 'go', route: 'home' });
+  }, [state.profile, state.account, session, route, dispatch]);
 
-  if (!state.profile) return <AuthScreen />;
+  if (!state.profile) {
+    switch (route) {
+      case 'emailAuth': return <EmailAuthScreen />;
+      case 'onboarding': return <OnboardingScreen />;
+      default: return <WelcomeScreen />;
+    }
+  }
 
   switch (route) {
     case 'home': return <HomeScreen />;
+    case 'discover': return <DiscoverScreen />;
+    case 'create': return <CreateScreen />;
+    case 'reels': return <ReelsScreen />;
     case 'matchmaking': return <MatchmakingScreen />;
     case 'lobby': return session ? <LobbyScreen /> : <HomeScreen />;
+    case 'announce':
     case 'session': return session ? <SessionScreen /> : <HomeScreen />;
     case 'rating': return session ? <RatingScreen /> : <HomeScreen />;
     case 'results': return session ? <ResultsScreen /> : <HomeScreen />;
     case 'summary': return session ? <SummaryScreen /> : <HomeScreen />;
     case 'profile': return <ProfileScreen />;
     case 'friends': return <FriendsScreen />;
+    case 'notifications': return <NotificationsScreen />;
     case 'createLobby': return <CreateLobbyScreen />;
     case 'joinLobby': return <JoinLobbyScreen />;
     case 'premium': return <PremiumScreen />;
     case 'editProfile': return <EditProfileScreen />;
     case 'settings': return <SettingsScreen />;
-    case 'notifications': return <NotificationsScreen />;
-    case 'announce': return session ? <SessionScreen /> : <HomeScreen />;
     default: return <HomeScreen />;
   }
 }
@@ -73,11 +104,19 @@ function Shell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pending.join(','), dispatch]);
 
+  // Your own profile is a tab root; somebody else's is a page you opened.
+  const showTabs =
+    Boolean(state.profile) &&
+    (TAB_ROUTES.includes(state.route) ||
+      (state.route === 'profile' && state.viewingPersonId === null));
+
   return (
     <>
       <div className="app-backdrop" aria-hidden />
-      <div className="phone">
+      <div className={`phone${showTabs ? ' phone--tabbed' : ''}`}>
         <Router />
+
+        {showTabs && <TabBar />}
 
         {state.route === 'announce' && state.session && scroller && (
           <ScrollerAnnouncement

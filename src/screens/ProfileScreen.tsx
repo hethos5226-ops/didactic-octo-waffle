@@ -6,6 +6,10 @@ import { LEVEL_TITLES, progressionFromXp, titleForLevel } from '../data/levels';
 import { VIBES } from '../data/vibes';
 import { sharedTags } from '../data/hashtags';
 import { mutualFriends } from '../data/social';
+import { useState } from 'react';
+import { reelsByCreator } from '../data/reels';
+import { formatCount } from '../data/content';
+import { VideoGrid } from './DiscoverScreen';
 import { feedScoreFrom, percentages } from '../state/scoring';
 import { useStore } from '../state/store';
 import type { CategoryId } from '../state/types';
@@ -38,6 +42,19 @@ export function ProfileScreen() {
   const common = isMe ? [] : sharedTags(profile.hashtags, other!.hashtags);
 
   const nextTitle = LEVEL_TITLES.find((t) => t.level > level);
+  const [contentTab, setContentTab] = useState<'posts' | 'liked' | 'saved'>('posts');
+
+  // Followers are simulated for other people (there is no server to count
+  // them) and start at zero for you, which is honest for a new account.
+  const followerCount = isMe ? profile.followerCount : 4_200 + other!.level * 1_137;
+  const followingCount = isMe ? profile.following.length : 180 + other!.level * 3;
+  const posts = isMe ? profile.uploadedVideos : reelsByCreator(other!.id).map((r) => r.id);
+  const isFollowing = !isMe && profile.following.includes(other!.id);
+
+  const gridIds =
+    contentTab === 'posts' ? posts
+      : contentTab === 'liked' ? (isMe ? profile.likedVideos : [])
+        : (isMe ? profile.savedVideos : []);
 
   // Somebody else's profile is the natural place to act on them.
   const isFriend = !isMe && profile.friends.includes(other!.id);
@@ -48,7 +65,12 @@ export function ProfileScreen() {
   return (
     <div className="screen profile">
       <header className="profile__nav">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
+        {/* Your own profile is a tab root, reached by tapping the tab — there
+            is nowhere "back" means, so the arrow only shows for someone
+            else's profile, which you genuinely navigated into. */}
+        {!isMe && (
+          <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
+        )}
         <span className="eyebrow">{isMe ? 'YOUR PROFILE' : 'PROFILE'}</span>
         <div className="spacer" />
         {isMe && (
@@ -81,7 +103,16 @@ export function ProfileScreen() {
           size={96}
           premium={isMe ? profile.premium : other!.level >= 25}
         />
-        <h1 className="profile__handle">@{isMe ? profile.handle : other!.handle}</h1>
+        <h1 className="profile__display">
+          {isMe ? profile.displayName || profile.handle : other!.handle}
+        </h1>
+        <div className="profile__handle">@{isMe ? profile.handle : other!.handle}</div>
+        {isMe && profile.bio && <p className="profile__bio">{profile.bio}</p>}
+        {!isMe && (
+          <p className="profile__bio">
+            {other!.vibes.map((v) => VIBES[v].label).join(' · ')}
+          </p>
+        )}
         <div className="profile__level-pill">
           <span aria-hidden>{title.emoji}</span> LEVEL {level} · {title.title}
         </div>
@@ -122,11 +153,88 @@ export function ProfileScreen() {
         </div>
       </div>
 
+      <div className="profile__counts">
+        <div className="profile__count">
+          <span className="profile__count-num">{formatCount(posts.length)}</span>
+          <span className="profile__count-label">Posts</span>
+        </div>
+        <button
+          className="profile__count"
+          onClick={() => isMe && dispatch({ type: 'go', route: 'friends' })}
+        >
+          <span className="profile__count-num">{formatCount(followerCount)}</span>
+          <span className="profile__count-label">Followers</span>
+        </button>
+        <button
+          className="profile__count"
+          onClick={() => isMe && dispatch({ type: 'go', route: 'friends' })}
+        >
+          <span className="profile__count-num">{formatCount(followingCount)}</span>
+          <span className="profile__count-label">Following</span>
+        </button>
+      </div>
+
+      {isMe ? (
+        <div className="row profile__cta">
+          <button
+            className="btn btn--ghost grow"
+            onClick={() => dispatch({ type: 'go', route: 'editProfile' })}
+          >
+            Edit profile
+          </button>
+          <button
+            className="btn btn--ghost grow"
+            onClick={() => dispatch({ type: 'go', route: 'friends' })}
+          >
+            Find people
+          </button>
+        </div>
+      ) : (
+        <div className="row profile__cta">
+          <button
+            className={`btn grow ${isFollowing ? 'btn--ghost' : 'btn--primary'}`}
+            onClick={() => dispatch({ type: 'toggleFollow', id: other!.id })}
+          >
+            {isFollowing ? 'Following' : 'Follow'}
+          </button>
+        </div>
+      )}
+
       <div className="profile__stats">
         <Stat emoji="❤️" value={isMe ? profile.profileLikes : 1284} label="Profile likes" />
         <Stat emoji="👥" value={isMe ? profile.friends.length : 48} label="Friends" />
         <Stat emoji="🎬" value={isMe ? profile.roundsScrolled : 96} label="Rounds scrolled" />
         <Stat emoji="✨" value={isMe ? profile.reactionsReceived : 5401} label="Reactions got" />
+      </div>
+
+      <div className="profile__content">
+        <div className="profile__content-tabs" role="tablist">
+          {(['posts', 'liked', 'saved'] as const).map((tab) => (
+            <button
+              key={tab}
+              role="tab"
+              aria-selected={contentTab === tab}
+              className={`profile__content-tab${contentTab === tab ? ' is-on' : ''}`}
+              onClick={() => setContentTab(tab)}
+            >
+              {tab === 'posts' ? '▦ Posts' : tab === 'liked' ? '❤️ Liked' : '🔖 Saved'}
+            </button>
+          ))}
+        </div>
+
+        {!isMe && contentTab !== 'posts' ? (
+          <p className="subtitle profile__private">
+            🔒 Only {other!.handle} can see what they've {contentTab === 'liked' ? 'liked' : 'saved'}.
+          </p>
+        ) : (
+          <VideoGrid ids={gridIds} onOpen={() => dispatch({ type: 'go', route: 'reels' })} />
+        )}
+
+        {isMe && contentTab === 'posts' && gridIds.length === 0 && (
+          <p className="subtitle profile__private">
+            You haven't posted yet — uploading arrives with the backend.
+          </p>
+        )}
       </div>
 
       <div className="card profile__vibes">

@@ -1,0 +1,154 @@
+import { useState } from 'react';
+import {
+  isConfigured, signInWithProvider, type AuthResult, type ProviderId,
+} from '../auth/providers';
+import { useStore } from '../state/store';
+
+type Doc = 'terms' | 'privacy' | null;
+
+/**
+ * First launch.
+ *
+ * Apple and Google are shown because they are what people expect and because
+ * the integration points are real — but neither pretends to work. Tapping one
+ * while unconfigured opens a sheet listing exactly what is still needed, which
+ * is more useful than a button that silently does nothing and far better than
+ * one that fakes a session.
+ */
+export function WelcomeScreen() {
+  const { dispatch } = useStore();
+  const [blocked, setBlocked] = useState<Extract<AuthResult, { status: 'not_configured' }> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<ProviderId | null>(null);
+  const [doc, setDoc] = useState<Doc>(null);
+
+  const useProvider = async (provider: 'apple' | 'google') => {
+    setError(null);
+    setBusy(provider);
+    const result = await signInWithProvider(provider);
+    setBusy(null);
+    if (result.status === 'not_configured') setBlocked(result);
+    else if (result.status === 'error') setError(result.message);
+    else dispatch({ type: 'signedIn', account: result.account });
+  };
+
+  if (doc) {
+    return (
+      <div className="screen welcome-doc">
+        <header className="lobby__head">
+          <button className="lobby__back" onClick={() => setDoc(null)}>‹</button>
+          <div className="grow">
+            <h1 className="title">{doc === 'terms' ? 'Terms of Service' : 'Privacy Policy'}</h1>
+            <p className="subtitle">Placeholder for the prototype</p>
+          </div>
+        </header>
+        <div className="card settings__doc">
+          {(doc === 'terms' ? TERMS : PRIVACY).map((p) => (
+            <p key={p.slice(0, 24)}>{p}</p>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="screen welcome">
+      <div className="welcome__glow" aria-hidden />
+
+      <div className="welcome__brand">
+        <div className="welcome__emoji-run" aria-hidden>
+          {['😂', '💀', '🔥', '🤯', '😭', '❤️'].map((e, i) => (
+            <span key={e} style={{ animationDelay: `${i * 0.18}s` }}>{e}</span>
+          ))}
+        </div>
+        <h1 className="welcome__wordmark">SCROLL</h1>
+        <p className="welcome__tagline">
+          Meet someone. Watch their FYP.<br />Laugh together. Rate their feed.
+        </p>
+      </div>
+
+      <div className="welcome__actions">
+        <button
+          className="auth-btn auth-btn--apple"
+          onClick={() => useProvider('apple')}
+          disabled={busy !== null}
+        >
+          <span className="auth-btn__mark" aria-hidden>&#63743;</span>
+          Continue with Apple
+          {!isConfigured('apple') && <span className="auth-btn__note">Setup needed</span>}
+        </button>
+
+        <button
+          className="auth-btn auth-btn--google"
+          onClick={() => useProvider('google')}
+          disabled={busy !== null}
+        >
+          <span className="auth-btn__mark auth-btn__mark--g" aria-hidden>G</span>
+          Continue with Google
+          {!isConfigured('google') && <span className="auth-btn__note">Setup needed</span>}
+        </button>
+
+        <button
+          className="auth-btn auth-btn--email"
+          onClick={() => dispatch({ type: 'go', route: 'emailAuth' })}
+          disabled={busy !== null}
+        >
+          <span className="auth-btn__mark" aria-hidden>✉️</span>
+          Continue with Email
+        </button>
+
+        {error && <p className="welcome__error">{error}</p>}
+      </div>
+
+      <p className="welcome__legal">
+        By continuing you agree to our{' '}
+        <button className="welcome__link" onClick={() => setDoc('terms')}>Terms of Service</button>
+        {' '}and{' '}
+        <button className="welcome__link" onClick={() => setDoc('privacy')}>Privacy Policy</button>.
+      </p>
+
+      {blocked && (
+        <div className="sheet" onClick={() => setBlocked(null)}>
+          <div className="sheet__panel" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet__grip" aria-hidden />
+            <h2 className="sheet__title">
+              {blocked.provider === 'apple' ? 'Sign in with Apple' : 'Sign in with Google'} isn't
+              configured yet
+            </h2>
+            <p className="subtitle">
+              The app is wired up for it — what's missing is the account setup, which has to be
+              done outside the code. You'll need:
+            </p>
+            <ul className="sheet__list">
+              {blocked.missing.map((item) => (
+                <li key={item}><span aria-hidden>•</span>{item}</li>
+              ))}
+            </ul>
+            <p className="tiny">Reference: {blocked.docs}</p>
+            <button className="btn btn--primary btn--block" onClick={() => setBlocked(null)}>
+              Got it
+            </button>
+            <button
+              className="btn btn--ghost btn--block"
+              onClick={() => { setBlocked(null); dispatch({ type: 'go', route: 'emailAuth' }); }}
+            >
+              Use email instead
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const TERMS = [
+  'This is an unreleased prototype shared for feedback. It is not a live service, nothing is charged, and no payment details are collected.',
+  'The feeds you watch are generated. No TikTok, Reels or Shorts content is fetched, embedded, hosted or redistributed at any point.',
+  'A real release needs proper terms covering acceptable use, what may be shown on a shared screen, moderation and reporting, account suspension, and the platform rules governing screen capture. Those are not written yet.',
+];
+
+const PRIVACY = [
+  'This build stores everything on your device. Your account, profile, photo and activity live in this browser’s local storage and are never uploaded, because there is no server to upload them to.',
+  'Sign in with Apple and Google are not connected yet, so no data is shared with either.',
+  'A real release needs to say much more: how a shared screen is handled, how voice is transmitted, retention, processors, deletion requests and abuse reporting. This page is a placeholder, not a policy.',
+];
