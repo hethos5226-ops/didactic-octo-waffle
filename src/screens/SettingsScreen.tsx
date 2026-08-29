@@ -40,7 +40,7 @@ export function SettingsScreen() {
   return (
     <div className="screen settings">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'viewPerson', id: null })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">Settings</h1>
           <p className="subtitle">@{profile.handle}</p>

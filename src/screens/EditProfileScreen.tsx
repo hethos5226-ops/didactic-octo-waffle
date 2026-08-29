@@ -28,13 +28,13 @@ export function EditProfileScreen() {
         hashtags: tags,
       },
     });
-    dispatch({ type: 'viewPerson', id: null });
+    dispatch({ type: 'back' });
   };
 
   return (
     <div className="screen editprofile">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'viewPerson', id: null })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">Edit profile</h1>
           <p className="subtitle">@{profile.handle}</p>

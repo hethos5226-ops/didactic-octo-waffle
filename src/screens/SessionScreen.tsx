@@ -37,8 +37,6 @@ export function SessionScreen() {
   );
   const item = feed[Math.min(session.videoIndex, feed.length - 1)];
 
-  const others = session.members.filter((m) => !m.isMe);
-
   // ── Simulated co-viewers ────────────────────────────────────────────────
   // Reactions land while a clip plays, weighted so the current clip's vibe
   // tends to draw the reaction it deserves.
@@ -130,6 +128,22 @@ export function SessionScreen() {
             </div>
           </div>
         </div>
+        <div className="session__faces">
+          {session.members.map((m) => (
+            <span
+              key={m.id}
+              className={`session__face${speakingId === m.id && !(m.isMe && session.micMuted) ? ' is-speaking' : ''}`}
+              style={{ borderColor: m.colour }}
+              title={m.isMe ? 'you' : `@${m.handle}`}
+            >
+              {m.photo
+                ? <img className="session__face-img" src={m.photo} alt="" />
+                : m.avatar}
+              {m.isMe && session.micMuted && <span className="session__face-mute" aria-hidden>🔇</span>}
+            </span>
+          ))}
+        </div>
+
         <div className="session__counter">
           <span className="session__counter-num">{session.videoIndex + 1}</span>
           <span className="session__counter-total">/ {session.videosPerRound}</span>
@@ -148,30 +162,6 @@ export function SessionScreen() {
         />
         <ReactionBubbles reactions={session.reactions} nameFor={nameFor} />
 
-        <div className="session__watchers">
-          {others.map((m) => (
-            <div key={m.id} className="session__watcher" title={`@${m.handle}`}>
-              <span
-                className={`session__watcher-face${speakingId === m.id ? ' is-speaking' : ''}`}
-                style={{ borderColor: m.colour }}
-              >
-                {m.photo
-                  ? <img className="session__watcher-img" src={m.photo} alt="" />
-                  : m.avatar}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <ChatPanel
-          open={chatOpen}
-          messages={session.chat}
-          members={session.members}
-          onSend={(text) => dispatch({ type: 'chat', fromId: 'me', text })}
-          onClose={() => setChatOpen(false)}
-        />
-      </div>
-
       <div className="session__reactions">
         {REACTIONS.map((r) => (
           <button
@@ -187,9 +177,17 @@ export function SessionScreen() {
         ))}
       </div>
 
+        <ChatPanel
+          open={chatOpen}
+          messages={session.chat}
+          members={session.members}
+          onSend={(text) => dispatch({ type: 'chat', fromId: 'me', text })}
+          onClose={() => setChatOpen(false)}
+        />
+      </div>
+
+
       <VoiceBar
-        members={session.members}
-        speakingId={speakingId}
         micMuted={session.micMuted}
         volume={session.volume}
         onToggleMute={() => dispatch({ type: 'toggleMute' })}

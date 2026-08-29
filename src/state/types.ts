@@ -131,6 +131,12 @@ export type Route =
 export interface AppState {
   profile: Profile | null;
   route: Route;
+  /**
+   * Where "back" goes. Hard-coding each screen's back target meant Settings ▸
+   * Get Premium ▸ back landed on the profile rather than back in Settings —
+   * a screen reachable from two places cannot know where it came from.
+   */
+  history: Route[];
   /** Profile being viewed on the profile screen; null means "me". */
   viewingPersonId: string | null;
   matchmakingSize: GroupSize;

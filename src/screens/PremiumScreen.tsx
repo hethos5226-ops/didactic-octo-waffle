@@ -46,7 +46,7 @@ export function PremiumScreen() {
       <div className="screen premium">
         <Confetti count={22} />
         <header className="lobby__head">
-          <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
+          <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
           <div className="grow">
             <h1 className="title">👑 You're Premium</h1>
             <p className="subtitle">Ads are gone and the first turn is yours to take.</p>
@@ -90,7 +90,7 @@ export function PremiumScreen() {
   return (
     <div className="screen premium">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <span className="eyebrow">SCROLL PREMIUM</span>
           <h1 className="title">Lose the ads.<br />Go first.</h1>

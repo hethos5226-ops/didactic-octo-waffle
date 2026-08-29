@@ -148,6 +148,18 @@ ul { margin: 0; padding: 0; list-style: none; }
 
 .screen--flush { padding: 0; }
 
+/* Scrolling screens lay their content out as a flex column, and flex children
+   shrink by default. On a short viewport — an iPhone with Safari's address and
+   tab bars taking ~190px — that squashed cards below their content height, and
+   any card with `overflow: hidden` (the RANDOM card) silently clipped its own
+   buttons instead of letting the screen scroll. Content keeps its height; the
+   screen scrolls. The session screen is excluded: its stage is *meant* to flex
+   to fill the space left over. */
+.screen:not(.screen--flush) > *,
+.screen:not(.screen--flush) .stack > * {
+  flex-shrink: 0;
+}
+
 /* Shorter phones (SE, mini) get a little of the vertical padding back. */
 @media (max-height: 700px) {
   .screen { padding-top: calc(10px + var(--safe-top)); gap: 12px; }

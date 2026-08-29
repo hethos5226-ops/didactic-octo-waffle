@@ -41,7 +41,7 @@ export function ProfileScreen() {
   return (
     <div className="screen profile">
       <header className="profile__nav">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <span className="eyebrow">{isMe ? 'YOUR PROFILE' : 'PROFILE'}</span>
         <div className="spacer" />
         {isMe && (

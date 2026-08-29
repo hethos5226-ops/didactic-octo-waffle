@@ -123,6 +123,7 @@ export type Action =
   | { type: 'signUp'; profile: Profile }
   | { type: 'signOut' }
   | { type: 'go'; route: Route }
+  | { type: 'back' }
   | { type: 'viewPerson'; id: string | null }
   | { type: 'startMatchmaking'; size: GroupSize }
   | { type: 'matchFound'; members: Member[] }
@@ -153,6 +154,7 @@ export type Action =
 export const initialState: AppState = {
   profile: null,
   route: 'auth',
+  history: [],
   viewingPersonId: null,
   matchmakingSize: 1,
   session: null,
@@ -163,6 +165,12 @@ export const initialState: AppState = {
 let liveId = 0;
 let toastId = 0;
 
+const MAX_HISTORY = 12;
+
+function pushHistory(state: AppState): Route[] {
+  return [...state.history, state.route].slice(-MAX_HISTORY);
+}
+
 function toast(emoji: string, text: string) {
   return { emoji, text, id: ++toastId };
 }
@@ -170,16 +178,28 @@ function toast(emoji: string, text: string) {
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'signUp':
-      return { ...state, profile: action.profile, route: 'home' };
+      return { ...state, profile: action.profile, route: 'home', history: [] };
 
     case 'signOut':
       return { ...initialState };
 
     case 'go':
-      return { ...state, route: action.route };
+      if (action.route === state.route) return state;
+      return { ...state, route: action.route, history: pushHistory(state) };
+
+    case 'back': {
+      const history = [...state.history];
+      const previous = history.pop();
+      return { ...state, route: previous ?? 'home', history };
+    }
 
     case 'viewPerson':
-      return { ...state, viewingPersonId: action.id, route: 'profile' };
+      return {
+        ...state,
+        viewingPersonId: action.id,
+        route: 'profile',
+        history: state.route === 'profile' ? state.history : pushHistory(state),
+      };
 
     case 'startMatchmaking':
       return { ...state, matchmakingSize: action.size, route: 'matchmaking' };
@@ -417,12 +437,13 @@ function reducer(state: AppState, action: Action): AppState {
         profile,
         session: null,
         route: 'home',
+        history: [],
         levelUpTo: levelAfter > levelBefore ? levelAfter : state.levelUpTo,
       };
     }
 
     case 'leaveSession':
-      return { ...state, session: null, route: 'home' };
+      return { ...state, session: null, route: 'home', history: [] };
 
     case 'toggleMute': {
       if (!state.session) return state;
@@ -474,7 +495,8 @@ function reducer(state: AppState, action: Action): AppState {
       return {
         ...state,
         profile: { ...state.profile, premium: true },
-        route: 'home',
+        route: state.history[state.history.length - 1] ?? 'home',
+        history: state.history.slice(0, -1),
         toast: toast('👑', 'Premium unlocked — no more ads!'),
       };
     }
@@ -528,7 +550,12 @@ const StoreContext = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     const profile = loadProfile();
-    return { ...initialState, profile, route: profile ? ('home' as Route) : ('auth' as Route) };
+    return {
+      ...initialState,
+      profile,
+      route: profile ? ('home' as Route) : ('auth' as Route),
+      history: [],
+    };
   });
 
   useEffect(() => { saveProfile(state.profile); }, [state.profile]);

@@ -27,7 +27,7 @@ export function CreateLobbyScreen() {
   return (
     <div className="screen createlobby">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">🔒 New lobby</h1>
           <p className="subtitle">Your room, your rules, your friends' terrible feeds.</p>
@@ -107,7 +107,7 @@ export function JoinLobbyScreen() {
   return (
     <div className="screen joinlobby">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">Join a lobby</h1>
           <p className="subtitle">Got a code from a mate? Drop it in.</p>
@@ -147,7 +147,7 @@ export function FriendsScreen() {
   return (
     <div className="screen friends">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">👥 Friends</h1>
           <p className="subtitle">

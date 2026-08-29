@@ -559,7 +559,7 @@
 .player__scrim {
   position: absolute;
   inset: auto 0 0 0;
-  height: 46%;
+  height: 54%;
   background: linear-gradient(to top, rgba(10, 6, 22, 0.72), transparent);
   z-index: 4;
   pointer-events: none;
@@ -569,7 +569,7 @@
   position: absolute;
   left: 14px;
   right: 76px;
-  bottom: 62px;
+  bottom: 108px;
   z-index: 6;
   pointer-events: none;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
@@ -600,7 +600,7 @@
 .player__rail {
   position: absolute;
   right: 10px;
-  bottom: 62px;
+  bottom: 108px;
   z-index: 6;
   pointer-events: none;
   display: flex;
@@ -630,7 +630,7 @@
 .player__swipe {
   position: absolute;
   left: 50%;
-  bottom: 14px;
+  bottom: 62px;
   transform: translateX(-50%);
   z-index: 7;
   display: flex;
@@ -663,7 +663,7 @@
   position: absolute;
   pointer-events: none;
   left: 50%;
-  bottom: 14px;
+  bottom: 62px;
   transform: translateX(-50%);
   z-index: 7;
   padding: 9px 16px;
@@ -719,34 +719,84 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: calc(12px + var(--safe-top)) 14px 10px;
+  padding: calc(8px + var(--safe-top)) 12px 8px;
   flex: none;
 }
 
-.session__title { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.session__clap { font-size: 26px; font-family: var(--font-emoji); }
-.session__who { font-size: 16px; font-weight: 900; letter-spacing: -0.4px; }
-.session__sub { font-size: 11px; color: var(--muted); font-weight: 600; }
+.session__title { display: flex; align-items: center; gap: 8px; min-width: 0; flex: none; }
+.session__clap { font-size: 22px; font-family: var(--font-emoji); }
+.session__who { font-size: 15px; font-weight: 900; letter-spacing: -0.4px; }
+.session__sub { font-size: 10px; color: var(--muted); font-weight: 600; }
+
+/* Everyone in the room, in the header. This used to be a column floating over
+   the clip plus a row in the bottom bar; both cost the feed height or covered
+   it. Here it costs neither. */
+.session__faces {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.session__faces::-webkit-scrollbar { display: none; }
+
+.session__face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  margin-right: -7px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: #1b1030;
+  font-size: 15px;
+  font-family: var(--font-emoji);
+  transition: transform 200ms;
+}
+
+.session__face.is-speaking {
+  transform: scale(1.16);
+  z-index: 2;
+  animation: speak-pulse 900ms ease-in-out infinite;
+}
+
+.session__face-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+
+.session__face-mute {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  font-size: 10px;
+  font-family: var(--font-emoji);
+}
 
 .session__counter {
-  margin-left: auto;
   display: flex;
   align-items: baseline;
   gap: 2px;
-  padding: 6px 12px;
+  flex: none;
+  padding: 5px 10px;
   border-radius: 999px;
   background: var(--surface-2);
   border: 1px solid var(--stroke);
   flex: none;
 }
 
-.session__counter-num { font-size: 19px; font-weight: 900; letter-spacing: -0.6px; }
+.session__counter-num { font-size: 17px; font-weight: 900; letter-spacing: -0.6px; }
 .session__counter-total { font-size: 11px; color: var(--muted); font-weight: 700; }
 
 .session__stage {
   position: relative;
   flex: 1;
   min-height: 0;
+  /* Full width, and every pixel of height the chrome does not need. Pinning
+     a strict 9/16 instead made the frame narrow enough that the live badge and
+     the vibe pill collided and the caption clipped — better to be portrait and
+     legible than portrait and broken. */
   margin: 0 12px;
   border-radius: var(--r-lg);
   overflow: hidden;
@@ -754,37 +804,8 @@
   box-shadow: var(--shadow-stage);
 }
 
-.session__watchers {
-  position: absolute;
-  pointer-events: none;
-  left: 12px;
-  top: 58px;
-  z-index: 5;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
 
-.session__watcher-face {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 2px solid;
-  background: rgba(10, 6, 22, 0.6);
-  backdrop-filter: blur(6px);
-  font-size: 17px;
-  font-family: var(--font-emoji);
-  transition: transform 200ms;
-}
 
-.session__watcher-img {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
 
 .lobby__order-img {
   width: 18px;
@@ -793,16 +814,16 @@
   object-fit: cover;
 }
 
-.session__watcher-face.is-speaking {
-  transform: scale(1.14);
-  animation: speak-pulse 900ms ease-in-out infinite;
-}
 
 .session__reactions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  z-index: 8;
   display: flex;
-  gap: 6px;
-  padding: 12px 12px 6px;
-  flex: none;
+  gap: 5px;
+  padding: 0 10px;
 }
 
 .react-btn {
@@ -857,8 +878,9 @@
 .voicebar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px calc(10px + var(--safe-bottom));
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 12px calc(8px + var(--safe-bottom));
   flex: none;
 }
 
@@ -875,8 +897,8 @@
 
 .voicebar__btn {
   position: relative;
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   display: grid;
   place-items: center;
