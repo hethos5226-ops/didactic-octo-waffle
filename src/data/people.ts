@@ -12,6 +12,8 @@ export interface Person {
   vibes: VibeId[];
   /** What they say they're into — used to surface common ground in a lobby. */
   hashtags: string[];
+  /** Who they already know. Symmetric, so mutual counts add up both ways. */
+  friends: string[];
   /** Lines this person says in voice chat / text chat while watching. */
   chatter: string[];
 }
@@ -33,6 +35,7 @@ export const PEOPLE: Person[] = [
     feedScore: 89,
     vibes: ['chaos', 'animals', 'cooking'],
     hashtags: ['dogs', 'chaos', 'cooking', 'memes'],
+    friends: ['jake', 'sarah', 'noor'],
     chatter: [
       'BRO WHAT IS THIS 😂',
       'nah skip this one',
@@ -53,6 +56,7 @@ export const PEOPLE: Person[] = [
     feedScore: 74,
     vibes: ['gaming', 'sports', 'brainrot'],
     hashtags: ['gaming', 'nba', 'brainrot', 'memes'],
+    friends: ['charley', 'mika', 'ellis', 'tomas'],
     chatter: [
       'HELP 💀',
       'my algorithm would never',
@@ -73,6 +77,7 @@ export const PEOPLE: Person[] = [
     feedScore: 93,
     vibes: ['fits', 'music', 'cozy'],
     hashtags: ['fashion', 'music', 'thrifting', 'cozy'],
+    friends: ['charley', 'yuki', 'noor', 'ada'],
     chatter: [
       'im crying 😭',
       'the editing on this actually',
@@ -93,6 +98,7 @@ export const PEOPLE: Person[] = [
     feedScore: 68,
     vibes: ['cozy', 'cooking', 'animals'],
     hashtags: ['cats', 'baking', 'plants', 'cozy'],
+    friends: ['charley', 'sarah', 'yuki'],
     chatter: [
       'this is so calming compared to jakes',
       'i need the recipe',
@@ -112,6 +118,7 @@ export const PEOPLE: Person[] = [
     feedScore: 81,
     vibes: ['cars', 'music', 'chaos'],
     hashtags: ['cars', 'f1', 'rap', 'chaos'],
+    friends: ['tomas', 'mika', 'ellis'],
     chatter: [
       'que 😭',
       'that engine sound though',
@@ -131,6 +138,7 @@ export const PEOPLE: Person[] = [
     feedScore: 96,
     vibes: ['brainrot', 'gaming', 'music'],
     hashtags: ['brainrot', 'anime', 'gaming', 'memes'],
+    friends: ['jake', 'diego', 'yuki', 'ada'],
     chatter: [
       '🤯🤯🤯',
       'this is peak internet',
@@ -150,6 +158,7 @@ export const PEOPLE: Person[] = [
     feedScore: 77,
     vibes: ['sports', 'gym', 'chaos'],
     hashtags: ['football', 'gym', 'chaos', 'comedy'],
+    friends: ['jake', 'diego', 'ellis'],
     chatter: [
       'GOLAÇO',
       'bro fell 😂',
@@ -169,6 +178,7 @@ export const PEOPLE: Person[] = [
     feedScore: 87,
     vibes: ['conspiracy', 'brainrot', 'fits'],
     hashtags: ['conspiracy', 'space', 'horror', 'fashion'],
+    friends: ['sarah', 'mika', 'yuki'],
     chatter: [
       'part 4 of 9 he says 💀',
       'no shot you believe this',
@@ -188,6 +198,7 @@ export const PEOPLE: Person[] = [
     feedScore: 62,
     vibes: ['gaming', 'chaos', 'gym'],
     hashtags: ['minecraft', 'gaming', 'memes', 'pranks'],
+    friends: ['jake', 'diego', 'tomas'],
     chatter: [
       'wait im new to this',
       'LOL',
@@ -207,6 +218,7 @@ export const PEOPLE: Person[] = [
     feedScore: 91,
     vibes: ['music', 'cozy', 'fits'],
     hashtags: ['music', 'plants', 'skincare', 'travel'],
+    friends: ['sarah', 'noor', 'mika', 'ada'],
     chatter: [
       'the transition 🔥',
       'saving that sound',

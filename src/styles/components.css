@@ -559,7 +559,7 @@
 .player__scrim {
   position: absolute;
   inset: auto 0 0 0;
-  height: 54%;
+  height: 46%;
   background: linear-gradient(to top, rgba(10, 6, 22, 0.72), transparent);
   z-index: 4;
   pointer-events: none;
@@ -569,7 +569,7 @@
   position: absolute;
   left: 14px;
   right: 76px;
-  bottom: 108px;
+  bottom: 62px;
   z-index: 6;
   pointer-events: none;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
@@ -600,7 +600,7 @@
 .player__rail {
   position: absolute;
   right: 10px;
-  bottom: 108px;
+  bottom: 62px;
   z-index: 6;
   pointer-events: none;
   display: flex;
@@ -630,7 +630,7 @@
 .player__swipe {
   position: absolute;
   left: 50%;
-  bottom: 62px;
+  bottom: 14px;
   transform: translateX(-50%);
   z-index: 7;
   display: flex;
@@ -663,7 +663,7 @@
   position: absolute;
   pointer-events: none;
   left: 50%;
-  bottom: 62px;
+  bottom: 14px;
   transform: translateX(-50%);
   z-index: 7;
   padding: 9px 16px;
@@ -719,25 +719,25 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: calc(8px + var(--safe-top)) 12px 8px;
+  padding: calc(12px + var(--safe-top)) 14px 10px;
   flex: none;
 }
 
-.session__title { display: flex; align-items: center; gap: 8px; min-width: 0; flex: none; }
-.session__clap { font-size: 22px; font-family: var(--font-emoji); }
-.session__who { font-size: 15px; font-weight: 900; letter-spacing: -0.4px; }
-.session__sub { font-size: 10px; color: var(--muted); font-weight: 600; }
+.session__title { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.session__clap { font-size: 26px; font-family: var(--font-emoji); }
+.session__who { font-size: 16px; font-weight: 900; letter-spacing: -0.4px; }
+.session__sub { font-size: 11px; color: var(--muted); font-weight: 600; }
 
-/* Everyone in the room, in the header. This used to be a column floating over
-   the clip plus a row in the bottom bar; both cost the feed height or covered
-   it. Here it costs neither. */
-.session__faces {
-  flex: 1;
+.session__counter {
+  margin-left: auto;
   display: flex;
-  justify-content: center;
-  min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
+  align-items: baseline;
+  gap: 2px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--stroke);
+  flex: none;
 }
 
 .session__faces::-webkit-scrollbar { display: none; }
@@ -786,17 +786,13 @@
   flex: none;
 }
 
-.session__counter-num { font-size: 17px; font-weight: 900; letter-spacing: -0.6px; }
+.session__counter-num { font-size: 19px; font-weight: 900; letter-spacing: -0.6px; }
 .session__counter-total { font-size: 11px; color: var(--muted); font-weight: 700; }
 
 .session__stage {
   position: relative;
   flex: 1;
   min-height: 0;
-  /* Full width, and every pixel of height the chrome does not need. Pinning
-     a strict 9/16 instead made the frame narrow enough that the live badge and
-     the vibe pill collided and the caption clipped — better to be portrait and
-     legible than portrait and broken. */
   margin: 0 12px;
   border-radius: var(--r-lg);
   overflow: hidden;
@@ -815,15 +811,48 @@
 }
 
 
-.session__reactions {
+.session__watchers {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 8px;
-  z-index: 8;
+  pointer-events: none;
+  left: 12px;
+  top: 58px;
+  z-index: 5;
   display: flex;
-  gap: 5px;
-  padding: 0 10px;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.session__watcher-face {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid;
+  background: rgba(10, 6, 22, 0.6);
+  backdrop-filter: blur(6px);
+  font-size: 17px;
+  font-family: var(--font-emoji);
+  transition: transform 200ms;
+}
+
+.session__watcher-face.is-speaking {
+  transform: scale(1.14);
+  animation: speak-pulse 900ms ease-in-out infinite;
+}
+
+.session__watcher-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.session__reactions {
+  display: flex;
+  gap: 6px;
+  padding: 12px 12px 6px;
+  flex: none;
 }
 
 .react-btn {
@@ -878,9 +907,8 @@
 .voicebar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 6px 12px calc(8px + var(--safe-bottom));
+  gap: 8px;
+  padding: 10px 12px calc(10px + var(--safe-bottom));
   flex: none;
 }
 
@@ -897,8 +925,8 @@
 
 .voicebar__btn {
   position: relative;
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -1439,19 +1467,79 @@
 
 .join__input::placeholder { color: var(--dim); }
 
+.friends__section { display: flex; flex-direction: column; gap: 10px; }
 .friends__list { display: flex; flex-direction: column; gap: 10px; }
 
 .friends__item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px;
+  gap: 10px;
+  padding: 10px 12px;
   border-radius: var(--r-md);
   background: var(--surface);
   border: 1px solid var(--stroke);
 }
 
-.friends__handle { font-size: 15px; font-weight: 800; margin-bottom: 3px; }
+.friends__item--request {
+  flex-wrap: wrap;
+  border-color: rgba(198, 255, 61, 0.4);
+  background: rgba(198, 255, 61, 0.07);
+}
+
+/* The row itself opens the profile, so the whole thing is one tap target
+   rather than a small chevron. */
+.friends__open {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  padding: 2px 0;
+}
+
+.friends__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.friends__handle { font-size: 15px; font-weight: 800; }
+.friends__chevron { font-size: 22px; color: var(--dim); flex: none; }
+.friends__request-actions { width: 100%; gap: 8px; }
+.friends__accept, .friends__decline { flex: 1; padding: 11px 14px; font-size: 13px; }
+.friends__add { padding: 10px 15px; font-size: 13px; flex: none; }
+
+.friends__pending {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--dim);
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  flex: none;
+}
+
+.friends__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+  font-family: var(--font-emoji);
+}
+
+.friends__search-input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 12px 0;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.friends__search-input::placeholder { color: var(--dim); font-weight: 500; }
+.friends__search-clear { font-size: 13px; color: var(--dim); padding: 6px; flex: none; }
 
 /* ═══════════════════════════════════════════════════════════════
    ROAMING LIGHT — for the waiting beats
@@ -1911,3 +1999,117 @@
 }
 
 .profile__settings:active { transform: scale(0.92); }
+
+
+/* ═══════════════════════════════════════════════════════════════
+   NOTIFICATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+.notifications { display: flex; flex-direction: column; gap: 16px; }
+.notifications__list { display: flex; flex-direction: column; gap: 10px; }
+
+.notifications__item {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  border: 1px solid var(--stroke);
+}
+
+/* Unread gets a colour edge rather than a dot, so it survives a glance. */
+.notifications__item.is-unread {
+  border-color: rgba(255, 46, 147, 0.45);
+  background: rgba(255, 46, 147, 0.08);
+}
+
+.notifications__open {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.notifications__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.notifications__text { font-size: 14px; font-weight: 600; line-height: 1.35; }
+.notifications__actions { width: 100%; gap: 8px; }
+.notifications__empty { text-align: center; }
+.notifications__empty-emoji { font-size: 40px; font-family: var(--font-emoji); display: block; margin-bottom: 10px; }
+
+.home__head-actions { gap: 10px; }
+
+.home__bell {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 19px;
+  font-family: var(--font-emoji);
+  background: var(--surface-2);
+  border: 1px solid var(--stroke);
+}
+
+.home__bell:active { transform: scale(0.92); }
+
+.home__bell-dot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--pink);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 19px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+
+.home__friends { position: relative; }
+
+.home__friends-badge {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--grad-hot);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 22px;
+  text-align: center;
+}
+
+.profile__actions { display: flex; flex-direction: column; gap: 10px; }
+.profile__mutuals { font-size: 13px; font-weight: 700; color: var(--lime); line-height: 1.4; }
+.profile__accept-row { gap: 10px; }
+
+.profile__friend-state {
+  padding: 14px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 800;
+  background: rgba(198, 255, 61, 0.14);
+  border: 1px solid rgba(198, 255, 61, 0.45);
+  color: var(--lime);
+}
+
+.profile__friend-state.is-pending {
+  background: var(--surface-2);
+  border-color: var(--stroke);
+  color: var(--muted);
+}

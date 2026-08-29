@@ -10,7 +10,8 @@ import {
   applyRatings, emptyTallies, feedScoreFrom, percentages, ratingFromReactions,
 } from './scoring';
 import type {
-  AppState, CategoryId, GroupSize, LobbyMode, Member, Profile, RoundResult, Route,
+  AppNotification, AppState, CategoryId, GroupSize, LobbyMode, Member, Profile,
+  RoundResult, Route,
 } from './types';
 
 const STORAGE_KEY = 'scroll.profile.v1';
@@ -27,6 +28,9 @@ function loadProfile(): Profile | null {
     parsed.hashtags = parsed.hashtags ?? [];
     parsed.photo = parsed.photo ?? null;
     parsed.premium = parsed.premium ?? false;
+    parsed.incomingRequests = parsed.incomingRequests ?? [];
+    parsed.sentRequests = parsed.sentRequests ?? [];
+    parsed.notifications = parsed.notifications ?? [];
     return parsed;
   } catch {
     return null;
@@ -61,12 +65,31 @@ export function newProfile(input: {
     tallies: emptyTallies(),
     profileLikes: 0,
     friends: [],
+    // A brand-new account with an empty inbox cannot show what the bell is
+    // for, so two people are already waiting. In a real build these arrive
+    // from the server.
+    ...seedSocial(),
     sessionsPlayed: 0,
     roundsScrolled: 0,
     reactionsSent: 0,
     reactionsReceived: 0,
     createdAt: Date.now(),
   };
+}
+
+let notificationId = 0;
+
+function seedSocial(): Pick<Profile, 'incomingRequests' | 'sentRequests' | 'notifications'> {
+  const asking = shuffled(PEOPLE.map((p) => p.id)).slice(0, 2);
+  return {
+    incomingRequests: asking,
+    sentRequests: [],
+    notifications: asking.map((id) => notify('request', id)),
+  };
+}
+
+function notify(kind: AppNotification['kind'], fromId: string): AppNotification {
+  return { id: ++notificationId, kind, fromId, at: Date.now(), read: false };
 }
 
 function memberFromPerson(p: Person, team: 'yours' | 'theirs'): Member {
@@ -149,6 +172,11 @@ export type Action =
   | { type: 'buyPremium' }
   | { type: 'cancelPremium' }
   | { type: 'claimFirstTurn' }
+  | { type: 'sendFriendRequest'; id: string }
+  | { type: 'acceptFriendRequest'; id: string }
+  | { type: 'declineFriendRequest'; id: string }
+  | { type: 'remoteAcceptedRequest'; id: string }
+  | { type: 'markNotificationsRead' }
   | { type: 'updateProfile'; changes: Partial<Pick<Profile, 'handle' | 'avatar' | 'photo' | 'colour' | 'country' | 'flag' | 'hashtags' | 'vibes'>> };
 
 export const initialState: AppState = {
@@ -487,6 +515,89 @@ function reducer(state: AppState, action: Action): AppState {
         levelUpTo: levelAfter > levelBefore ? levelAfter : state.levelUpTo,
         session: { ...state.session, friended: [...state.session.friended, action.id] },
         toast: toast('🤝', `You and @${person?.handle ?? action.id} are friends!`),
+      };
+    }
+
+    case 'sendFriendRequest': {
+      if (!state.profile) return state;
+      const { friends, sentRequests, incomingRequests } = state.profile;
+      if (friends.includes(action.id) || sentRequests.includes(action.id)) return state;
+
+      // If they already asked you, sending back is just accepting.
+      if (incomingRequests.includes(action.id)) {
+        return reducer(state, { type: 'acceptFriendRequest', id: action.id });
+      }
+      const person = PEOPLE.find((p) => p.id === action.id);
+      return {
+        ...state,
+        profile: { ...state.profile, sentRequests: [...sentRequests, action.id] },
+        toast: toast('📨', `Request sent to @${person?.handle ?? action.id}`),
+      };
+    }
+
+    case 'acceptFriendRequest': {
+      if (!state.profile) return state;
+      if (state.profile.friends.includes(action.id)) return state;
+      const person = PEOPLE.find((p) => p.id === action.id);
+      const levelBefore = progressionFromXp(state.profile.xp).level;
+      const profile: Profile = {
+        ...state.profile,
+        friends: [...state.profile.friends, action.id],
+        incomingRequests: state.profile.incomingRequests.filter((id) => id !== action.id),
+        sentRequests: state.profile.sentRequests.filter((id) => id !== action.id),
+        profileLikes: state.profile.profileLikes + 1,
+        xp: state.profile.xp + XP.friendAdded,
+        notifications: state.profile.notifications.map((n) =>
+          n.kind === 'request' && n.fromId === action.id ? { ...n, read: true } : n,
+        ),
+      };
+      const levelAfter = progressionFromXp(profile.xp).level;
+      return {
+        ...state,
+        profile,
+        levelUpTo: levelAfter > levelBefore ? levelAfter : state.levelUpTo,
+        toast: toast('🤝', `You and @${person?.handle ?? action.id} are friends!`),
+      };
+    }
+
+    case 'declineFriendRequest': {
+      if (!state.profile) return state;
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          incomingRequests: state.profile.incomingRequests.filter((id) => id !== action.id),
+          notifications: state.profile.notifications.filter(
+            (n) => !(n.kind === 'request' && n.fromId === action.id),
+          ),
+        },
+      };
+    }
+
+    case 'remoteAcceptedRequest': {
+      // Stands in for the other person tapping accept on their phone.
+      if (!state.profile) return state;
+      if (!state.profile.sentRequests.includes(action.id)) return state;
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          friends: [...state.profile.friends, action.id],
+          sentRequests: state.profile.sentRequests.filter((id) => id !== action.id),
+          xp: state.profile.xp + XP.friendAdded,
+          notifications: [notify('accepted', action.id), ...state.profile.notifications].slice(0, 30),
+        },
+      };
+    }
+
+    case 'markNotificationsRead': {
+      if (!state.profile) return state;
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          notifications: state.profile.notifications.map((n) => ({ ...n, read: true })),
+        },
       };
     }
 

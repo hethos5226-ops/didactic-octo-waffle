@@ -1,6 +1,10 @@
 import { useState } from 'react';
+import { Avatar } from './Avatar';
+import type { Member } from '../state/types';
 
 interface VoiceBarProps {
+  members: Member[];
+  speakingId: string | null;
   micMuted: boolean;
   volume: number;
   onToggleMute: () => void;
@@ -14,17 +18,34 @@ interface VoiceBarProps {
 /**
  * Voice is the thing that turns "watching a video" into "hanging out". It is
  * always-on and ambient — no call to join, no ringing, you are just in the
- * room. Controls only: who is in the room is shown in the header, where it
- * costs the feed no height.
+ * room. The controls stay to the three that actually matter mid-session.
  */
 export function VoiceBar({
-  micMuted, volume, onToggleMute, onVolume, onLeave,
+  members, speakingId, micMuted, volume, onToggleMute, onVolume, onLeave,
   chatOpen, chatCount, onToggleChat,
 }: VoiceBarProps) {
   const [volumeOpen, setVolumeOpen] = useState(false);
 
   return (
     <div className="voicebar">
+      <div className="voicebar__people">
+        {members.map((m) => (
+          <div key={m.id} className="voicebar__person" title={`@${m.handle}`}>
+            <Avatar
+              emoji={m.avatar}
+              photo={m.photo}
+              colour={m.colour}
+              size={34}
+              speaking={speakingId === m.id && !(m.isMe && micMuted)}
+              dim={m.isMe && micMuted}
+            />
+            {m.isMe && micMuted && <span className="voicebar__muted" aria-hidden>🔇</span>}
+          </div>
+        ))}
+      </div>
+
+      <div className="spacer" />
+
       <button
         className={`voicebar__btn voicebar__btn--chat${chatOpen ? ' is-on' : ''}`}
         onClick={onToggleChat}

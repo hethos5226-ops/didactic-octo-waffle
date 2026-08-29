@@ -29,12 +29,27 @@ export interface Profile {
   tallies: Tallies;
   profileLikes: number;
   friends: string[];
+  /** People who have asked to be your friend and are waiting on you. */
+  incomingRequests: string[];
+  /** People you have asked, still waiting on them. */
+  sentRequests: string[];
+  notifications: AppNotification[];
   /** People who liked or friended you, newest first — shown on the profile. */
   sessionsPlayed: number;
   roundsScrolled: number;
   reactionsSent: number;
   reactionsReceived: number;
   createdAt: number;
+}
+
+export type NotificationKind = 'request' | 'accepted' | 'liked';
+
+export interface AppNotification {
+  id: number;
+  kind: NotificationKind;
+  fromId: string;
+  at: number;
+  read: boolean;
 }
 
 export type LobbyMode = 'random' | 'private';
@@ -126,7 +141,8 @@ export type Route =
   | 'joinLobby'
   | 'premium'
   | 'editProfile'
-  | 'settings';
+  | 'settings'
+  | 'notifications';
 
 export interface AppState {
   profile: Profile | null;

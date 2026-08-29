@@ -8,7 +8,9 @@ import { RatingScreen } from './screens/RatingScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { SummaryScreen } from './screens/SummaryScreen';
 import { ProfileScreen } from './screens/ProfileScreen';
-import { CreateLobbyScreen, JoinLobbyScreen, FriendsScreen } from './screens/LobbySetupScreens';
+import { CreateLobbyScreen, JoinLobbyScreen } from './screens/LobbySetupScreens';
+import { FriendsScreen } from './screens/FriendsScreen';
+import { NotificationsScreen } from './screens/NotificationsScreen';
 import { PremiumScreen } from './screens/PremiumScreen';
 import { EditProfileScreen } from './screens/EditProfileScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -44,6 +46,7 @@ function Router() {
     case 'premium': return <PremiumScreen />;
     case 'editProfile': return <EditProfileScreen />;
     case 'settings': return <SettingsScreen />;
+    case 'notifications': return <NotificationsScreen />;
     case 'announce': return session ? <SessionScreen /> : <HomeScreen />;
     default: return <HomeScreen />;
   }
@@ -52,6 +55,23 @@ function Router() {
 function Shell() {
   const { state, dispatch } = useStore();
   const scroller = currentScroller(state);
+  const pending = state.profile?.sentRequests ?? [];
+
+  // Stands in for the other person tapping accept on their phone. Without it a
+  // sent request would sit as "Requested" forever and the loop would never
+  // close. In a real build this arrives over the wire.
+  useEffect(() => {
+    if (pending.length === 0) return;
+    const timers = pending.map((id, i) =>
+      window.setTimeout(
+        () => dispatch({ type: 'remoteAcceptedRequest', id }),
+        4000 + i * 2500 + Math.random() * 3000,
+      ),
+    );
+    return () => timers.forEach(clearTimeout);
+    // Keyed on the ids, so an unrelated re-render does not restart the clock.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending.join(','), dispatch]);
 
   return (
     <>

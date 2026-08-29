@@ -5,6 +5,7 @@ import { SCORE_CATEGORIES } from '../data/reactions';
 import { LEVEL_TITLES, progressionFromXp, titleForLevel } from '../data/levels';
 import { VIBES } from '../data/vibes';
 import { sharedTags } from '../data/hashtags';
+import { mutualFriends } from '../data/social';
 import { feedScoreFrom, percentages } from '../state/scoring';
 import { useStore } from '../state/store';
 import type { CategoryId } from '../state/types';
@@ -37,6 +38,12 @@ export function ProfileScreen() {
   const common = isMe ? [] : sharedTags(profile.hashtags, other!.hashtags);
 
   const nextTitle = LEVEL_TITLES.find((t) => t.level > level);
+
+  // Somebody else's profile is the natural place to act on them.
+  const isFriend = !isMe && profile.friends.includes(other!.id);
+  const requested = !isMe && profile.sentRequests.includes(other!.id);
+  const asked = !isMe && profile.incomingRequests.includes(other!.id);
+  const mutuals = isMe ? [] : mutualFriends(profile.friends, other!);
 
   return (
     <div className="screen profile">
@@ -136,6 +143,45 @@ export function ProfileScreen() {
           ))}
         </div>
       </div>
+
+      {!isMe && (
+        <div className="profile__actions">
+          {mutuals.length > 0 && (
+            <p className="profile__mutuals">
+              👥 {mutuals.length} mutual {mutuals.length === 1 ? 'friend' : 'friends'} ·{' '}
+              {mutuals.map((m) => `@${m.handle}`).join(', ')}
+            </p>
+          )}
+
+          {isFriend ? (
+            <div className="profile__friend-state">✓ You're friends</div>
+          ) : asked ? (
+            <div className="row profile__accept-row">
+              <button
+                className="btn btn--ghost grow"
+                onClick={() => dispatch({ type: 'declineFriendRequest', id: other!.id })}
+              >
+                Ignore
+              </button>
+              <button
+                className="btn btn--primary grow"
+                onClick={() => dispatch({ type: 'acceptFriendRequest', id: other!.id })}
+              >
+                Accept request
+              </button>
+            </div>
+          ) : requested ? (
+            <div className="profile__friend-state is-pending">📨 Request sent</div>
+          ) : (
+            <button
+              className="btn btn--primary btn--lg btn--block"
+              onClick={() => dispatch({ type: 'sendFriendRequest', id: other!.id })}
+            >
+              + Add friend
+            </button>
+          )}
+        </div>
+      )}
 
       {tags.length > 0 && (
         <div className="card profile__tags-card">

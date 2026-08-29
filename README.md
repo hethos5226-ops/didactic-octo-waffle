@@ -50,10 +50,16 @@ npm install
 npm run dev
 ```
 
-Open the printed URL. **This is designed for an iPhone held in portrait**, not
-for a desktop browser — use your browser's device toolbar (iPhone 15 Pro, or
+Open the printed URL. **This is designed for a full-screen iPhone app in
+portrait**, not for a desktop browser — use your browser's device toolbar (iPhone 15 Pro, or
 anything from an SE up to a Pro Max) or open it on a phone. On a wide screen it
-renders inside a 393 × 852 frame so what you see is what ships. `npm run build`
+renders inside a 393 × 852 frame so what you see is what ships.
+
+Layout is tuned for the **full** screen height, the way a native app gets it.
+Opened in mobile Safari the address and tab bars take roughly 190px off that,
+so the video is shorter than intended — that is the browser, not the design.
+Add it to your home screen and it runs full-screen with the intended
+proportions. `npm run build`
 produces a static `dist/`.
 
 ### Emoji
@@ -151,7 +157,10 @@ HOME  →  match (solo / duo / trio)  →  LOBBY  →  "🎬 JAKE IS SCROLLING!"
 | Feed Score | ✅ weighted, persistent, moves over time |
 | XP / levels | ✅ six titles, level-up celebration |
 | Profile | ✅ level, score, category breakdown, stats, vibes |
-| Add friend / like | ✅ |
+| Add friend / like | ✅ end of session, or any time from Friends |
+| Find people | ✅ search, and suggestions ranked by mutual friends |
+| Friend requests | ✅ send, accept, ignore, with a pending state |
+| Activity feed | ✅ bell on the home screen with an unread count |
 | Private lobby + invite code | ✅ `FYP-7K2Q` + shareable link |
 | Profile photo | ✅ photo or emoji face, cropped and downscaled on device |
 | Interest hashtags | ✅ `#dogs` `#brainrot`, suggested or typed |
@@ -179,6 +188,11 @@ with the first weighted heaviest — because an algorithm has a favourite, and
 that is what makes a feed recognisable as *theirs*. Watch @charley twice and
 you will start to recognise her feed. That recognition is the thing the real
 product would deliver with a genuine screen share.
+
+Friend requests are simulated too: a sent request is accepted a few seconds
+later, so the loop closes and the "accepted" notification is real rather than
+hypothetical. Two people are already waiting when an account is created, since
+an empty inbox cannot show what the bell is for.
 
 Co-viewers are simulated locally too. They react, they talk, and they take the
 phone when it is their turn. The shape of the state is the same as it would be
@@ -213,6 +227,15 @@ anyone fills in the form.
 **The score is weighted, not averaged.** GOOD FYP counts most, WTF counts
 least. A chaotic feed and a cosy feed can both be great; only one category
 actually means "I'd watch this again".
+
+**Adding people is a place, not a moment.** It used to be possible only in
+the few seconds after a session ended, so if you missed that window the person
+was gone. Friends is now a screen you can go to: who is waiting on you, who you
+might know, and a search box. Suggestions rank by mutual friends first and
+shared hashtags second — mutuals are the strongest signal you actually know
+someone, and hashtags carry the ranking on a new account where nobody has any
+mutuals yet, which is exactly the list that decides whether the feature feels
+useful at all.
 
 **Nothing blocks the first session.** No email, no verification, no permissions
 prompt. The fastest way to lose someone is to put a form between them and the

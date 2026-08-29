@@ -17,11 +17,22 @@ export function HomeScreen() {
   const progress = progressionFromXp(profile.xp);
   const title = titleForLevel(progress.level);
   const score = feedScoreFrom(percentages(profile.tallies));
+  const unread = profile.notifications.filter((n) => !n.read).length;
 
   return (
     <div className="screen home">
       <header className="home__head">
         <h1 className="wordmark">SCROLL</h1>
+        <div className="row home__head-actions">
+        <button
+          className="home__bell"
+          onClick={() => dispatch({ type: 'go', route: 'notifications' })}
+          aria-label={unread > 0 ? `Activity, ${unread} new` : 'Activity'}
+        >
+          🔔
+          {unread > 0 && <span className="home__bell-dot">{unread > 9 ? '9+' : unread}</span>}
+        </button>
+
         <button
           className="home__me"
           onClick={() => dispatch({ type: 'viewPerson', id: null })}
@@ -36,6 +47,7 @@ export function HomeScreen() {
             premium={profile.premium}
           />
         </button>
+        </div>
       </header>
 
       {/* RANDOM — the headline action. Deliberately the biggest, brightest
@@ -142,14 +154,17 @@ export function HomeScreen() {
 
       <AdSlot />
 
-      {profile.friends.length > 0 && (
-        <button
-          className="home__friends"
-          onClick={() => dispatch({ type: 'go', route: 'friends' })}
-        >
-          👥 {profile.friends.length} {profile.friends.length === 1 ? 'friend' : 'friends'} — invite them to a lobby →
-        </button>
-      )}
+      <button
+        className="home__friends"
+        onClick={() => dispatch({ type: 'go', route: 'friends' })}
+      >
+        {profile.friends.length > 0
+          ? `👥 ${profile.friends.length} ${profile.friends.length === 1 ? 'friend' : 'friends'} — invite them to a lobby →`
+          : '👥 Find friends — search people and see who you might know →'}
+        {profile.incomingRequests.length > 0 && (
+          <span className="home__friends-badge">{profile.incomingRequests.length}</span>
+        )}
+      </button>
     </div>
   );
 }
