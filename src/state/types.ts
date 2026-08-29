@@ -1,5 +1,6 @@
 import type { VibeId } from '../data/vibes';
 import type { XpAward } from '../data/levels';
+import type { AuthAccount } from '../backend';
 
 export type CategoryId = 'funny' | 'chaotic' | 'fire' | 'wtf' | 'good';
 
@@ -13,7 +14,14 @@ export type Tallies = Record<CategoryId, CategoryTally>;
 
 export interface Profile {
   id: string;
+  /** @username — unique, lowercase, no spaces. */
   handle: string;
+  /** The name shown above the handle; free-form, may repeat across accounts. */
+  displayName: string;
+  bio: string;
+  /** Which provider the account came from, for the settings screen. */
+  authProvider: 'apple' | 'google' | 'email' | null;
+  email: string | null;
   /** Emoji face — always set, and the fallback whenever a photo is missing. */
   avatar: string;
   /** Optional profile photo as a downscaled data URL. */
@@ -34,6 +42,18 @@ export interface Profile {
   /** People you have asked, still waiting on them. */
   sentRequests: string[];
   notifications: AppNotification[];
+
+  /* ── Follow graph ───────────────────────────────────────────────────
+     Separate from friends on purpose: friends are who you watch WITH
+     (lobbies, invites), following is a looser one-way link you can form
+     from someone's profile after a game. */
+  following: string[];
+  /** Simulated inbound count; there is no server to compute a real one. */
+  followerCount: number;
+  /** Newest first, capped — see the store. */
+  matchHistory: MatchSummary[];
+  /** True once the intro cards have been through, so returning users skip. */
+  onboarded: boolean;
   /** People who liked or friended you, newest first — shown on the profile. */
   sessionsPlayed: number;
   roundsScrolled: number;
@@ -50,6 +70,29 @@ export interface AppNotification {
   fromId: string;
   at: number;
   read: boolean;
+}
+
+/**
+ * What happened in one game, kept after the session ends.
+ *
+ * Sessions used to be discarded the moment they finished, which meant the
+ * thing you just spent ten minutes on left no trace. A match is the unit of
+ * play in SCROLL, so it is the thing worth remembering.
+ */
+export interface MatchSummary {
+  id: string;
+  at: number;
+  mode: 'random' | 'private';
+  /** Everyone who was in the room, you included. */
+  players: { id: string; handle: string; avatar: string; colour: string; isMe: boolean }[];
+  /** One entry per round, in the order they scrolled. */
+  rounds: { handle: string; isMe: boolean; feedScore: number }[];
+  /** Your own round, if you had one. */
+  myFeedScore: number | null;
+  bestHandle: string;
+  bestScore: number;
+  totalReactions: number;
+  xpEarned: number;
 }
 
 export type LobbyMode = 'random' | 'private';
@@ -125,7 +168,17 @@ export interface SessionState {
   claimedFirst: boolean;
 }
 
+/** The five permanent destinations. Everything else opens over the top. */
+/**
+ * Home, Profile, PLAY, Activity, Settings. PLAY sits in the middle because
+ * starting a game is the point of the app, not one destination among five.
+ */
+export type Tab = 'home' | 'profile' | 'play' | 'activity' | 'settings';
+
 export type Route =
+  | 'welcome'
+  | 'emailAuth'
+  | 'onboarding'
   | 'auth'
   | 'home'
   | 'matchmaking'
@@ -146,7 +199,10 @@ export type Route =
 
 export interface AppState {
   profile: Profile | null;
+  /** Set by sign-in, before onboarding has produced a profile. */
+  account: AuthAccount | null;
   route: Route;
+  tab: Tab;
   /**
    * Where "back" goes. Hard-coding each screen's back target meant Settings ▸
    * Get Premium ▸ back landed on the profile rather than back in Settings —

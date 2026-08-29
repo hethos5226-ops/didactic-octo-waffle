@@ -40,7 +40,6 @@ export function SettingsScreen() {
   return (
     <div className="screen settings">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">Settings</h1>
           <p className="subtitle">@{profile.handle}</p>
@@ -60,12 +59,6 @@ export function SettingsScreen() {
           label={profile.premium ? 'Manage Premium' : 'Get Premium'}
           hint={profile.premium ? 'Active' : 'No ads, and scroll first'}
           onClick={() => dispatch({ type: 'go', route: 'premium' })}
-        />
-        <Row
-          emoji="👥"
-          label="Friends"
-          hint={`${profile.friends.length} ${profile.friends.length === 1 ? 'person' : 'people'}`}
-          onClick={() => dispatch({ type: 'go', route: 'friends' })}
         />
       </section>
 

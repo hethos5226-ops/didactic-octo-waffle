@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Avatar } from '../components/Avatar';
-import { PEOPLE, type Person } from '../data/people';
-import { searchPeople, suggestedPeople, mutualFriends } from '../data/social';
+import {
+  lookupPeople, mutualsWith, searchDirectory, suggestDirectory,
+  type DirectoryPerson, type Suggestion,
+} from '../data/directory';
+import { isBackendConfigured } from '../backend';
 import { useStore } from '../state/store';
 
 /**
@@ -11,32 +14,60 @@ import { useStore } from '../state/store';
  * ended, which meant that if you missed that moment the person was gone. This
  * screen makes it a place you can go: who is waiting on you, who you might
  * know, and a search box.
+ *
+ * Everyone shown here comes from the directory, which reads real profiles once
+ * a backend is connected and the built-in cast when it is not. The queries are
+ * async either way, so connecting a project changes the data and not this
+ * screen.
  */
 export function FriendsScreen() {
   const { state, dispatch } = useStore();
   const profile = state.profile!;
   const [query, setQuery] = useState('');
 
-  const requests = profile.incomingRequests
-    .map((id) => PEOPLE.find((p) => p.id === id))
-    .filter((p): p is Person => Boolean(p));
+  const [requests, setRequests] = useState<DirectoryPerson[]>([]);
+  const [friends, setFriends] = useState<DirectoryPerson[]>([]);
+  const [sent, setSent] = useState<DirectoryPerson[]>([]);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [results, setResults] = useState<DirectoryPerson[]>([]);
 
-  const friends = PEOPLE.filter((p) => profile.friends.includes(p.id));
+  const requestIds = useMemo(() => profile.incomingRequests, [profile.incomingRequests]);
+  const friendIds = useMemo(() => profile.friends, [profile.friends]);
+  const sentIds = useMemo(() => profile.sentRequests, [profile.sentRequests]);
 
-  const suggestions = useMemo(
-    () =>
-      suggestedPeople({
-        myFriends: profile.friends,
-        myTags: profile.hashtags,
-        exclude: [...profile.sentRequests, ...profile.incomingRequests],
-      }),
-    [profile.friends, profile.hashtags, profile.sentRequests, profile.incomingRequests],
-  );
+  useEffect(() => {
+    let live = true;
+    Promise.all([lookupPeople(requestIds), lookupPeople(friendIds), lookupPeople(sentIds)])
+      .then(([r, f, s]) => {
+        if (!live) return;
+        setRequests(r);
+        setFriends(f);
+        setSent(s);
+      });
+    return () => { live = false; };
+  }, [requestIds, friendIds, sentIds]);
 
-  const results = useMemo(
-    () => (query.trim() ? searchPeople(query, profile.friends) : []),
-    [query, profile.friends],
-  );
+  useEffect(() => {
+    let live = true;
+    suggestDirectory({
+      selfId: profile.id,
+      myFriends: profile.friends,
+      myTags: profile.hashtags,
+      exclude: [...profile.sentRequests, ...profile.incomingRequests],
+    }).then((s) => { if (live) setSuggestions(s); });
+    return () => { live = false; };
+  }, [profile.id, profile.friends, profile.hashtags, profile.sentRequests, profile.incomingRequests]);
+
+  // Debounced: a query per keystroke would be a query per keystroke against a
+  // real database.
+  useEffect(() => {
+    if (!query.trim()) { setResults([]); return; }
+    let live = true;
+    const timer = window.setTimeout(() => {
+      searchDirectory(query, profile.id).then((r) => { if (live) setResults(r); });
+    }, 220);
+    return () => { live = false; clearTimeout(timer); };
+  }, [query, profile.id]);
 
   const open = (id: string) => dispatch({ type: 'viewPerson', id });
 
@@ -48,6 +79,7 @@ export function FriendsScreen() {
           <h1 className="title">👥 Friends</h1>
           <p className="subtitle">
             {friends.length} {friends.length === 1 ? 'person' : 'people'} you met by scrolling.
+            {!isBackendConfigured() && ' Demo directory — connect a backend for real users.'}
           </p>
         </div>
       </header>
@@ -91,7 +123,7 @@ export function FriendsScreen() {
                 {requests.map((p) => (
                   <li key={p.id} className="friends__item friends__item--request">
                     <button className="friends__open" onClick={() => open(p.id)}>
-                      <Avatar emoji={p.avatar} colour={p.colour} flag={p.flag} size={46} />
+                      <Avatar emoji={p.avatar} photo={p.photo} colour={p.colour} flag={p.flag} size={46} />
                       <span className="grow friends__body">
                         <span className="friends__handle">@{p.handle}</span>
                         <span className="tiny">wants to be friends</span>
@@ -151,19 +183,15 @@ export function FriendsScreen() {
             <section className="friends__section">
               <span className="eyebrow">SENT</span>
               <ul className="friends__list">
-                {profile.sentRequests.map((id) => {
-                  const p = PEOPLE.find((x) => x.id === id);
-                  if (!p) return null;
-                  return (
-                    <PersonRow
-                      key={id}
-                      person={p}
-                      onOpen={() => open(id)}
-                      hint="Waiting for them to accept"
-                      action={<span className="friends__pending">Requested</span>}
-                    />
-                  );
-                })}
+                {sent.map((p) => (
+                  <PersonRow
+                    key={p.id}
+                    person={p}
+                    onOpen={() => open(p.id)}
+                    hint="Waiting for them to accept"
+                    action={<span className="friends__pending">Requested</span>}
+                  />
+                ))}
               </ul>
             </section>
           )}
@@ -200,16 +228,16 @@ export function FriendsScreen() {
   );
 }
 
-function hintForFriend(myFriends: string[], person: Person): string {
-  const mutuals = mutualFriends(myFriends, person);
+function hintForFriend(myFriends: string[], person: DirectoryPerson): string {
+  const mutuals = mutualsWith(myFriends, person.id);
   if (mutuals.length > 0) {
     return `👥 ${mutuals.length} mutual ${mutuals.length === 1 ? 'friend' : 'friends'}`;
   }
-  return `LV ${person.level} · ⭐ ${person.feedScore}`;
+  return `${person.flag} ${person.country}`;
 }
 
 interface PersonRowProps {
-  person: Person;
+  person: DirectoryPerson;
   hint?: string;
   action?: React.ReactNode;
   onOpen: () => void;
@@ -221,14 +249,15 @@ function PersonRow({ person, hint, action, onOpen }: PersonRowProps) {
       <button className="friends__open" onClick={onOpen}>
         <Avatar
           emoji={person.avatar}
+          photo={person.photo}
           colour={person.colour}
           flag={person.flag}
           size={46}
-          premium={person.level >= 25}
+          premium={person.premium}
         />
         <span className="grow friends__body">
           <span className="friends__handle">@{person.handle}</span>
-          <span className="tiny">{hint ?? `LV ${person.level}`}</span>
+          <span className="tiny">{hint ?? `${person.flag} ${person.country}`}</span>
         </span>
       </button>
       {action ?? <span className="friends__chevron" aria-hidden>›</span>}

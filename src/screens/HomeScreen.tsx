@@ -17,21 +17,12 @@ export function HomeScreen() {
   const progress = progressionFromXp(profile.xp);
   const title = titleForLevel(progress.level);
   const score = feedScoreFrom(percentages(profile.tallies));
-  const unread = profile.notifications.filter((n) => !n.read).length;
 
   return (
     <div className="screen home">
       <header className="home__head">
         <h1 className="wordmark">SCROLL</h1>
         <div className="row home__head-actions">
-        <button
-          className="home__bell"
-          onClick={() => dispatch({ type: 'go', route: 'notifications' })}
-          aria-label={unread > 0 ? `Activity, ${unread} new` : 'Activity'}
-        >
-          🔔
-          {unread > 0 && <span className="home__bell-dot">{unread > 9 ? '9+' : unread}</span>}
-        </button>
 
         <button
           className="home__me"

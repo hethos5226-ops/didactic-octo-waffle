@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { Avatar } from '../components/Avatar';
-import { PEOPLE } from '../data/people';
+import { localPerson } from '../data/directory';
 import { useStore } from '../state/store';
-import type { AppNotification } from '../state/types';
+import type { AppNotification, MatchSummary } from '../state/types';
 
 /** Friend activity: who asked, who accepted, who liked your profile. */
 export function NotificationsScreen() {
@@ -19,17 +19,30 @@ export function NotificationsScreen() {
   }, []);
 
   const items = [...profile.notifications].sort((a, b) => b.at - a.at);
+  const matches = profile.matchHistory;
 
   return (
     <div className="screen notifications">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">🔔 Activity</h1>
-          <p className="subtitle">Friend requests and what people did.</p>
+          <p className="subtitle">How your last games went, and who's asking.</p>
         </div>
       </header>
 
+      {matches.length > 0 && (
+        <section className="activity__section">
+          <span className="eyebrow">YOUR LAST GAMES</span>
+          <ul className="activity__matches">
+            {matches.slice(0, 5).map((m) => (
+              <MatchCard key={m.id} match={m} />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <section className="activity__section">
+        <span className="eyebrow">FRIEND ACTIVITY</span>
       {items.length === 0 ? (
         <div className="card notifications__empty">
           <span className="notifications__empty-emoji" aria-hidden>🔕</span>
@@ -46,6 +59,8 @@ export function NotificationsScreen() {
         </ul>
       )}
 
+      </section>
+
       <button
         className="btn btn--ghost btn--block"
         onClick={() => dispatch({ type: 'go', route: 'friends' })}
@@ -56,10 +71,65 @@ export function NotificationsScreen() {
   );
 }
 
+/**
+ * What happened last time you played. This is the thing the app is actually
+ * for, so it sits above friend requests rather than under them.
+ */
+function MatchCard({ match }: { match: MatchSummary }) {
+  const rounds = [...match.rounds].sort((a, b) => b.feedScore - a.feedScore);
+  return (
+    <li className="activity__match">
+      <div className="activity__match-top">
+        <span className="activity__match-mode">
+          {match.mode === 'private' ? '🔒 Private' : '🌎 Random'}
+        </span>
+        <span className="tiny">{timeAgo(match.at)}</span>
+      </div>
+
+      <div className="activity__match-players">
+        {match.players.map((p) => (
+          <span
+            key={p.id}
+            className="activity__match-face"
+            style={{ borderColor: p.colour }}
+            title={p.isMe ? 'you' : `@${p.handle}`}
+          >
+            {p.avatar}
+          </span>
+        ))}
+        <span className="tiny activity__match-count">
+          {match.players.length} played · {match.rounds.length} rounds
+        </span>
+      </div>
+
+      <div className="activity__match-scores">
+        {rounds.map((r, i) => (
+          <div key={`${r.handle}-${i}`} className={`activity__score${r.isMe ? ' is-me' : ''}`}>
+            <span className="activity__score-rank">{i === 0 ? '👑' : `${i + 1}`}</span>
+            <span className="grow">{r.isMe ? 'you' : `@${r.handle}`}</span>
+            <span className="activity__score-num">⭐ {r.feedScore}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="activity__match-foot">
+        {match.myFeedScore !== null && (
+          <span>Your feed scored <strong>{match.myFeedScore}</strong></span>
+        )}
+        <span className="tiny">
+          {match.totalReactions} reactions · +{match.xpEarned} XP
+        </span>
+      </div>
+    </li>
+  );
+}
+
 function Row({ notification }: { notification: AppNotification }) {
   const { state, dispatch } = useStore();
   const profile = state.profile!;
-  const person = PEOPLE.find((p) => p.id === notification.fromId);
+  // Notifications from real accounts carry a uuid the built-in cast will not
+  // match; the row is skipped rather than rendering a blank.
+  const person = localPerson(notification.fromId);
   if (!person) return null;
 
   const stillPending =

@@ -2,8 +2,15 @@
 
 **Meet someone. Watch their FYP. Laugh together. Rate their feed.**
 
-A prototype for a social app where you get matched with strangers, one person
-shares their short-form feed, and everyone watches and reacts to it together.
+**SCROLL is a party game you play by watching reels.**
+
+You get matched with people → one of you is picked as the Scroller → they share
+their feed → everyone watches the same thing at once, reacts live and talks over
+it → the room rates their feed → it rotates. Score, levels and friends all come
+out of *playing*.
+
+There is deliberately **no solo For You feed**. Watching alone is a different
+app; the reels are the material the game is played with, not the product.
 
 The content is not the product — **the reaction to someone else's algorithm
 is**. Watching what the internet has decided a stranger in Osaka is like, with
@@ -40,6 +47,74 @@ npx serve scroll-prototype
 ```
 
 (It needs a server — browsers block ES modules opened over `file://`.)
+
+---
+
+## Connecting the backend
+
+The app runs in **two modes**, and both are real:
+
+| | No project configured | Project configured |
+|---|---|---|
+| Accounts | Device-local, one browser | Supabase Auth, follows you between devices |
+| Apple / Google | Refuses, and says what is missing | Real OAuth through Supabase |
+| Email | Works, device-local | Real sign-up, sign-in and password reset |
+| Profiles, friends, matches | `localStorage` | Postgres with row-level security |
+| Directory | The built-in cast | Real profiles |
+
+The unconfigured mode is not a stub — it is the state the app is in until you
+create a project, and keeping it working means the app stays demonstrable
+throughout. The UI says which mode it is in rather than implying otherwise.
+
+### 1. Create the project
+
+1. Make a project at [supabase.com](https://supabase.com) — the free tier is enough.
+2. **Project Settings → API**: copy the Project URL and the `anon` key.
+3. `cp .env.example .env.local` and paste them in.
+4. **SQL Editor**: paste and run `supabase/migrations/0001_init.sql`.
+
+That is everything email sign-in needs. It creates the tables, the row-level
+security policies, the follower-count trigger and the `avatars` storage bucket.
+
+> The `anon` key is public and safe to ship. The **service-role key is not** —
+> it bypasses row-level security completely and must never appear in the app.
+
+### 2. Sign in with Google
+
+1. Google Cloud Console → **APIs & Services → Credentials** → OAuth client ID (Web).
+2. Configure the OAuth consent screen if prompted.
+3. In Supabase: **Authentication → Providers → Google**, paste the Client ID and secret.
+4. Copy the callback URL Supabase shows you into Google's **Authorised redirect URIs**.
+
+### 3. Sign in with Apple
+
+1. **An Apple Developer Program membership** — paid, roughly £79/$99 a year. There is no free tier for this, and it is the only hard blocker in the list.
+2. Create a **Services ID** (not an App ID) and enable "Sign in with Apple".
+3. Create a **private key (.p8)**; note its **Key ID** and your **Team ID**.
+4. In Supabase: **Authentication → Providers → Apple**, paste the Services ID, Team ID, Key ID and the .p8 contents.
+5. Add Supabase's callback URL to the Services ID's **Return URLs**.
+
+Supabase signs Apple's client secret for you, which is why no server of our own
+is needed. The .p8 key stays in the Supabase dashboard and never comes near the
+app bundle.
+
+### 4. Email confirmation
+
+Supabase enables "Confirm email" by default, so a new account cannot sign in
+until the link is clicked. The app says so rather than spinning. To skip it
+while testing: **Authentication → Providers → Email → Confirm email → off**.
+
+### What the schema enforces
+
+The policies were run against a real PostgreSQL instance and checked, not
+merely written:
+
+- Profiles are a public directory — you must be able to find people to play with — but only the owner can edit their own row.
+- Only the person who *received* a friend request can accept it. Without that, anyone could mark their own outgoing request accepted.
+- A notification's actor must be the person creating it, so nobody can fill your inbox with messages that appear to come from someone else.
+- Matches are private to the player they belong to.
+- Handles are lowercase, 2–18 characters, and unique.
+- You cannot friend yourself, and follower counts are kept by a trigger rather than trusted from the client.
 
 ---
 
@@ -165,11 +240,29 @@ HOME  →  match (solo / duo / trio)  →  LOBBY  →  "🎬 JAKE IS SCROLLING!"
 | Profile photo | ✅ photo or emoji face, cropped and downscaled on device |
 | Interest hashtags | ✅ `#dogs` `#brainrot`, suggested or typed |
 | Premium | ✅ removes ads, claims the first turn, crown badge |
+| Welcome / sign-in | ✅ Apple + Google wired but unconfigured; email works locally |
+| Onboarding | ✅ username, display name, photo, bio, interests, intro |
+| Tab navigation | ✅ Home · Profile · **PLAY!** · Activity · Settings |
+| Match history | ✅ every game is kept and shown in Activity |
+| Profile | ✅ photo, display name, bio, followers, following, feed score |
 
 Everything persists to `localStorage`, so your level and Feed Score are still
 there when you come back.
 
 ---
+
+## Navigation
+
+**Home · Profile · PLAY! · Activity · Settings.**
+
+PLAY sits in the middle and is the loudest thing in the bar, because starting a
+game is what the app is *for* — the other four are places you go between games.
+It opens the modes as a sheet rather than routing to a screen, so a game can
+start from wherever you are.
+
+Activity leads with **your last games** — the scoreboard, who played, what your
+feed scored — above friend requests. A match is the unit of play, so it is the
+thing worth remembering; sessions used to be discarded the moment they ended.
 
 ## About the feeds
 
@@ -227,6 +320,12 @@ anyone fills in the form.
 **The score is weighted, not averaged.** GOOD FYP counts most, WTF counts
 least. A chaotic feed and a cosy feed can both be great; only one category
 actually means "I'd watch this again".
+
+**There is no content library, and no solo feed.** SCROLL has no posts, likes
+or saves of its own: the only feed in the app is the one a Scroller shares
+during a game, and it belongs to them. A viewer for browsing reels alone was
+built and then removed — it made watching alone the main event and pushed the
+game into a corner, which is the opposite of the point.
 
 **Adding people is a place, not a moment.** It used to be possible only in
 the few seconds after a session ended, so if you missed that window the person
