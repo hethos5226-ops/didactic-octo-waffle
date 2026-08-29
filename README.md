@@ -92,6 +92,32 @@ failures at this stage are quiet ones — a bucket that was never created, or
 RLS left off — so it is worth asking before trusting the backend with a real
 account. It refuses to run at all if it finds a service-role key.
 
+### 1b. Connect the deployed site
+
+`.env.local` only configures a local build. The GitHub Pages deploy is built
+by Actions, so it reads its values from the repository instead — under
+**Settings → Secrets and variables → Actions**:
+
+| Where | Name | Value |
+|---|---|---|
+| **Variables** tab | `VITE_SUPABASE_URL` | `https://<project-ref>.supabase.co` |
+| **Secrets** tab | `VITE_SUPABASE_ANON_KEY` | the publishable key |
+
+Vite compiles both into the JavaScript it emits, which is what the publishable
+key is for — it is public by design, and row-level security is what protects
+the data. Keeping it as a secret keeps it out of the repository and masks it in
+build logs. **The service-role key must never go here**: the build refuses to
+run if it finds one, and refuses to publish a bundle containing one.
+
+Set both or neither. One alone would build a site that silently falls back to
+device-local accounts, so the build stops and says so.
+
+Supabase also has to be told where the site lives, or confirmation links will
+point at the wrong place — **Authentication → URL Configuration**:
+
+- **Site URL**: `https://<user>.github.io/<repo>/`
+- **Redirect URLs**: add that same URL
+
 ### 2. Sign in with Google
 
 1. Google Cloud Console → **APIs & Services → Credentials** → OAuth client ID (Web).

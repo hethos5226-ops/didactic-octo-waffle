@@ -17,6 +17,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { looksPrivileged } from './privileged-key.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -70,25 +71,6 @@ function readEnvFile(name) {
     out[key] = value;
   }
   return { path, values: out };
-}
-
-/**
- * A service-role key must never reach this file -- it bypasses row-level
- * security completely, so an app carrying one has no security at all. Both
- * shapes Supabase has issued are recognised: the newer `sb_secret_` keys, and
- * the older JWTs carrying "role":"service_role" in the payload.
- */
-function looksPrivileged(value) {
-  if (!value) return false;
-  if (value.startsWith('sb_secret_')) return 'a `sb_secret_` secret key';
-  const parts = value.split('.');
-  if (parts.length === 3) {
-    try {
-      const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
-      if (payload.role === 'service_role') return 'a service_role JWT';
-    } catch { /* not a JWT we can read; nothing to conclude */ }
-  }
-  return false;
 }
 
 console.log(bold('\nSCROLL -- backend check'));

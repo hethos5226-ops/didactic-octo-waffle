@@ -37,9 +37,37 @@ jobs:
 
       - run: npm ci
 
+      # Vite bakes VITE_ variables into the emitted JavaScript, so these two
+      # are what connect the published site to the real Supabase project.
+      #
+      # The URL is a repository *variable* — it is not a secret, it appears in
+      # every network request the app makes, and having it readable in the
+      # Settings UI makes it checkable at a glance.
+      #
+      # The key is a repository *secret*. It is the publishable key, which is
+      # public by design and ends up in the bundle either way; holding it as a
+      # secret keeps it out of the repository and masks it in the build log,
+      # which is where it could otherwise leak somewhere it was not meant to
+      # go. The service-role key must never be used here — the guard step
+      # below fails the build if it finds one.
+      - name: Check the build environment
+        run: node scripts/guard-build-env.mjs
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
       # Typecheck runs as part of `npm run build` (tsc -b && vite build), so a
       # broken build never gets published.
       - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      # Reads what was actually emitted, rather than trusting the step above:
+      # this catches a privileged key arriving from anywhere, and nothing is
+      # uploaded or deployed if it finds one.
+      - name: Scan the bundle for privileged keys
+        run: node scripts/guard-build-env.mjs --scan-dist
 
       # Downloadable even when Pages is not enabled.
       - name: Upload build for download
