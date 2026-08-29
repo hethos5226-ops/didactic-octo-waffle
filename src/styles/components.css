@@ -800,16 +800,12 @@
   box-shadow: var(--shadow-stage);
 }
 
-
-
-
 .lobby__order-img {
   width: 18px;
   height: 18px;
   border-radius: 50%;
   object-fit: cover;
 }
-
 
 .session__watchers {
   position: absolute;
@@ -2000,7 +1996,6 @@
 
 .profile__settings:active { transform: scale(0.92); }
 
-
 /* ═══════════════════════════════════════════════════════════════
    NOTIFICATIONS
    ═══════════════════════════════════════════════════════════════ */
@@ -2292,21 +2287,6 @@
 .sheet__empty { text-align: center; padding: 26px 10px; }
 .sheet__empty span { font-size: 38px; font-family: var(--font-emoji); display: block; margin-bottom: 10px; }
 
-.share__grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-
-.share__target {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 14px 4px;
-  border-radius: var(--r-md);
-  background: var(--surface);
-  border: 1px solid var(--stroke);
-}
-
-.share__emoji { font-size: 24px; font-family: var(--font-emoji); }
-
 /* ═══════════════════════════════════════════════════════════════
    EMAIL AUTH + ONBOARDING
    ═══════════════════════════════════════════════════════════════ */
@@ -2486,269 +2466,10 @@
 
 .tabbar__create:active { transform: scale(0.9); }
 
-/* ═══════════════════════════════════════════════════════════════
-   REELS — full-screen vertical feed
-   ═══════════════════════════════════════════════════════════════ */
-
-.reels { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #000; }
-
-.reels__top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 6;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: calc(10px + var(--safe-top)) 14px 10px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), transparent);
-  pointer-events: none;
-}
-
-.reels__top > * { pointer-events: auto; }
-
-.reels__back, .reels__mute {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(8px);
-  color: #fff;
-  font-size: 17px;
-  flex: none;
-}
-
-.reels__back { font-size: 26px; line-height: 1; }
-.reels__mute { font-family: var(--font-emoji); margin-left: auto; }
-
-.reels__tabs { display: flex; gap: 16px; }
-
-.reels__tab {
-  font-size: 16px;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.55);
-  position: relative;
-}
-
-.reels__tab.is-on { color: #fff; }
-
-.reels__tab.is-on::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  bottom: -7px;
-  transform: translateX(-50%);
-  width: 18px;
-  height: 3px;
-  border-radius: 999px;
-  background: #fff;
-}
-
 /* Scroll-snap gives the platform's own paging, momentum and rubber-banding. */
-.reels__scroller {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  scrollbar-width: none;
-  overscroll-behavior-y: contain;
-}
-
-.reels__scroller::-webkit-scrollbar { display: none; }
-
-.reel {
-  position: relative;
-  height: 100%;
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-  overflow: hidden;
-}
-
-.reel__surface { position: absolute; inset: 0; }
-
-.reel__video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  background: #000;
-}
-
-.reel__fallback {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(160deg, #ff2e93, #7b2ff7) center/cover;
-}
-
-.reel__fallback-note { font-size: 13px; font-weight: 700; color: rgba(255, 255, 255, 0.8); }
-
-.reel__scrim {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.35) 0%, transparent 22%),
-    linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 42%);
-}
-
-.reel__paused {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 62px;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  animation: pop-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-}
-
-.reel__resume {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  padding: 14px 22px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-weight: 800;
-  backdrop-filter: blur(8px);
-}
-
-.reel__heart-burst {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  font-size: 100px;
-  font-family: var(--font-emoji);
-  pointer-events: none;
-  animation: heart-burst 500ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-@keyframes heart-burst {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
-  40% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
-  100% { opacity: 0; transform: translate(-50%, -60%) scale(1); }
-}
-
-.reel__rail {
-  position: absolute;
-  right: 10px;
-  bottom: 108px;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 17px;
-}
-
-.reel__creator { position: relative; }
-
-.reel__follow {
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  transform: translateX(-50%);
-  width: 21px;
-  height: 21px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--pink);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 900;
-  line-height: 1;
-  border: 2px solid #000;
-}
-
-.reel__action {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.reel__action:active { transform: scale(0.85); }
-.reel__action.is-on .reel__action-icon { transform: scale(1.1); }
-.reel__action-icon { font-size: 30px; font-family: var(--font-emoji); filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45)); transition: transform 200ms; }
-.reel__action-label { font-size: 11px; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
-.reel__disc { font-size: 30px; font-family: var(--font-emoji); animation: spin-slow 4s linear infinite; }
-
-.reel__meta {
-  position: absolute;
-  left: 14px;
-  right: 84px;
-  bottom: 22px;
-  z-index: 4;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
-}
-
-.reel__handle {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 16px;
-  font-weight: 900;
-  color: #fff;
-  align-self: flex-start;
-}
-
-.reel__verified { font-size: 11px; color: #22e1ff; }
-.reel__age { font-size: 12px; font-weight: 600; opacity: 0.7; }
-
-.reel__follow-btn {
-  align-self: flex-start;
-  padding: 6px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  font-size: 12px;
-  font-weight: 800;
-  color: #fff;
-}
-
-.reel__caption { font-size: 14px; font-weight: 600; line-height: 1.4; color: #fff; }
-.reel__tags { display: flex; flex-wrap: wrap; gap: 7px; }
-.reel__tag { font-size: 13px; font-weight: 800; color: #c6ff3d; }
-
-.reel__audio {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.reel__audio-icon { font-family: var(--font-emoji); }
-.reel__audio-text { overflow: hidden; text-overflow: ellipsis; }
-
-.reel__progress {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  background: rgba(255, 255, 255, 0.2);
-  z-index: 5;
-}
-
-.reel__progress span { display: block; height: 100%; background: #fff; transition: width 120ms linear; }
 
 /* ═══════════════════════════════════════════════════════════════
-   DISCOVER / CREATE / VIDEO GRID
+   PROFILE COUNTS
    ═══════════════════════════════════════════════════════════════ */
 
 .discover, .create { display: flex; flex-direction: column; gap: 18px; }
@@ -2805,30 +2526,6 @@
   white-space: nowrap;
 }
 
-.vgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
-
-.vgrid__cell {
-  position: relative;
-  aspect-ratio: 9 / 16;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #1b1030;
-}
-
-.vgrid__cell:active { transform: scale(0.97); }
-.vgrid__thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
-.vgrid__blank { display: block; width: 100%; height: 100%; background: var(--grad-hot); }
-
-.vgrid__plays {
-  position: absolute;
-  left: 6px;
-  bottom: 6px;
-  font-size: 11px;
-  font-weight: 800;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
-}
-
 .create__option {
   display: flex;
   align-items: center;
@@ -2868,36 +2565,6 @@
 .create__divider { margin-top: 4px; }
 .create__note { line-height: 1.6; }
 
-.home__reels {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  padding: 15px;
-  border-radius: var(--r-lg);
-  background: linear-gradient(120deg, rgba(34, 225, 255, 0.16), rgba(123, 47, 247, 0.14));
-  border: 1px solid rgba(34, 225, 255, 0.34);
-  text-align: left;
-  transition: transform 130ms;
-}
-
-.home__reels:active { transform: scale(0.98); }
-
-.home__reels-play {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--grad-cool);
-  color: #06131a;
-  font-size: 16px;
-  flex: none;
-}
-
-.home__reels-body { display: flex; flex-direction: column; gap: 2px; }
-.home__reels-title { font-size: 15px; font-weight: 900; letter-spacing: 0.4px; color: var(--cyan); }
-.home__reels-arrow { font-size: 24px; color: var(--dim); }
-
 /* ═══════════════════════════════════════════════════════════════
    PROFILE — counts and content tabs
    ═══════════════════════════════════════════════════════════════ */
@@ -2924,34 +2591,13 @@
   border: 1px solid var(--stroke);
 }
 
+/* Posts is no longer a thing, so the row carries Followers and Following. */
+.profile__counts--two { grid-template-columns: repeat(2, 1fr); }
+
 .profile__count { display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .profile__count-num { font-size: 19px; font-weight: 900; letter-spacing: -0.5px; }
 .profile__count-label { font-size: 11px; font-weight: 700; color: var(--dim); }
 .profile__cta { gap: 10px; }
-
-.profile__content { display: flex; flex-direction: column; gap: 12px; }
-
-.profile__content-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--stroke);
-}
-
-.profile__content-tab {
-  flex: 1;
-  padding: 10px 6px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--dim);
-  transition: background 180ms, color 180ms;
-}
-
-.profile__content-tab.is-on { background: var(--surface-2); color: var(--text); }
-.profile__private { text-align: center; padding: 22px 10px; }
 
 /* ═══════════════════════════════════════════════════════════════
    TAB BAR — PLAY at the centre

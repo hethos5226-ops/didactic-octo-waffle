@@ -38,9 +38,6 @@ function loadProfile(): Profile | null {
     parsed.email = parsed.email ?? null;
     parsed.following = parsed.following ?? [];
     parsed.followerCount = parsed.followerCount ?? 0;
-    parsed.likedVideos = parsed.likedVideos ?? [];
-    parsed.savedVideos = parsed.savedVideos ?? [];
-    parsed.uploadedVideos = parsed.uploadedVideos ?? [];
     parsed.matchHistory = parsed.matchHistory ?? [];
     parsed.onboarded = parsed.onboarded ?? true;
     return parsed;
@@ -91,9 +88,6 @@ export function newProfile(input: {
     // because there is no server to count anything.
     following: [],
     followerCount: 0,
-    likedVideos: [],
-    savedVideos: [],
-    uploadedVideos: [],
     matchHistory: [],
     onboarded: true,
     sessionsPlayed: 0,
@@ -198,8 +192,6 @@ export type Action =
   | { type: 'signUp'; profile: Profile }
   | { type: 'signedIn'; account: AuthAccount }
   | { type: 'setTab'; tab: Tab }
-  | { type: 'toggleLike'; videoId: string }
-  | { type: 'toggleSave'; videoId: string }
   | { type: 'toggleFollow'; id: string }
   | { type: 'signOut' }
   | { type: 'go'; route: Route }
@@ -694,34 +686,6 @@ function reducer(state: AppState, action: Action): AppState {
         // so back never walks sideways through tabs.
         history: [],
         viewingPersonId: action.tab === 'profile' ? null : state.viewingPersonId,
-      };
-    }
-
-    case 'toggleLike': {
-      if (!state.profile) return state;
-      const liked = state.profile.likedVideos.includes(action.videoId);
-      return {
-        ...state,
-        profile: {
-          ...state.profile,
-          likedVideos: liked
-            ? state.profile.likedVideos.filter((id) => id !== action.videoId)
-            : [...state.profile.likedVideos, action.videoId],
-        },
-      };
-    }
-
-    case 'toggleSave': {
-      if (!state.profile) return state;
-      const saved = state.profile.savedVideos.includes(action.videoId);
-      return {
-        ...state,
-        profile: {
-          ...state.profile,
-          savedVideos: saved
-            ? state.profile.savedVideos.filter((id) => id !== action.videoId)
-            : [...state.profile.savedVideos, action.videoId],
-        },
       };
     }
 

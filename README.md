@@ -210,8 +210,7 @@ HOME  →  match (solo / duo / trio)  →  LOBBY  →  "🎬 JAKE IS SCROLLING!"
 | Onboarding | ✅ username, display name, photo, bio, interests, intro |
 | Tab navigation | ✅ Home · Profile · **PLAY!** · Activity · Settings |
 | Match history | ✅ every game is kept and shown in Activity |
-| Reel viewer | ✅ real video, autoplay, tap-pause, mute, like/save/share/follow |
-| Profile content | ✅ followers, following, posts / liked / saved grids |
+| Profile | ✅ photo, display name, bio, followers, following, feed score |
 
 Everything persists to `localStorage`, so your level and Feed Score are still
 there when you come back.
@@ -230,28 +229,6 @@ start from wherever you are.
 Activity leads with **your last games** — the scoreboard, who played, what your
 feed scored — above friend requests. A match is the unit of play, so it is the
 thing worth remembering; sessions used to be discarded the moment they ended.
-
-The reel viewer is reached from a profile's grid, not from a feed tab. It is
-"look at what this person posted", and it is the surface the shared in-session
-feed will be built on.
-
-## About the reels
-
-The six clips in `public/videos/` are **generated for this prototype** with
-ffmpeg — animated gradients, nobody's content. They are real H.264/VP9 files
-rather than CSS animations on purpose: the player's autoplay, pause, seek, loop
-and mute are the browser's own behaviour, so swapping in uploaded video changes
-only the URLs.
-
-Each ships as **both MP4/H.264 and WebM/VP9**. That is not belt-and-braces —
-Safari and iOS need H.264, while Chromium builds without proprietary codecs
-(plain Chromium, many Linux browsers) can only decode VP9. Offering both as
-`<source>` elements lets each browser take the one it can play; this was found
-by the video silently failing to load in exactly such a browser.
-
-Autoplay only works muted. That is a browser rule, not a preference: an unmuted
-`play()` outside a user gesture is rejected, so the feed starts muted and the
-first tap on the speaker is what grants sound.
 
 ## About the feeds
 
@@ -309,6 +286,12 @@ anyone fills in the form.
 **The score is weighted, not averaged.** GOOD FYP counts most, WTF counts
 least. A chaotic feed and a cosy feed can both be great; only one category
 actually means "I'd watch this again".
+
+**There is no content library, and no solo feed.** SCROLL has no posts, likes
+or saves of its own: the only feed in the app is the one a Scroller shares
+during a game, and it belongs to them. A viewer for browsing reels alone was
+built and then removed — it made watching alone the main event and pushed the
+game into a corner, which is the opposite of the point.
 
 **Adding people is a place, not a moment.** It used to be possible only in
 the few seconds after a session ended, so if you missed that window the person

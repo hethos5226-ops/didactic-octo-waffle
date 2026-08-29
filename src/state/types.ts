@@ -43,17 +43,13 @@ export interface Profile {
   sentRequests: string[];
   notifications: AppNotification[];
 
-  /* ── Content graph ──────────────────────────────────────────────────
-     Following is separate from friends on purpose: friends are who you
-     watch WITH (lobbies, invites), following is whose content you see.
-     Collapsing them would mean following a stranger's reel also put them
-     in your lobby invite list. */
+  /* ── Follow graph ───────────────────────────────────────────────────
+     Separate from friends on purpose: friends are who you watch WITH
+     (lobbies, invites), following is a looser one-way link you can form
+     from someone's profile after a game. */
   following: string[];
   /** Simulated inbound count; there is no server to compute a real one. */
   followerCount: number;
-  likedVideos: string[];
-  savedVideos: string[];
-  uploadedVideos: string[];
   /** Newest first, capped — see the store. */
   matchHistory: MatchSummary[];
   /** True once the intro cards have been through, so returning users skip. */
@@ -183,7 +179,6 @@ export type Route =
   | 'welcome'
   | 'emailAuth'
   | 'onboarding'
-  | 'reels'
   | 'auth'
   | 'home'
   | 'matchmaking'

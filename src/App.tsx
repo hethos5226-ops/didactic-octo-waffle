@@ -3,7 +3,6 @@ import { WelcomeScreen } from './screens/WelcomeScreen';
 import { EmailAuthScreen } from './screens/EmailAuthScreen';
 import { OnboardingScreen } from './screens/OnboardingScreen';
 import { HomeScreen } from './screens/HomeScreen';
-import { ReelsScreen } from './screens/ReelsScreen';
 import { MatchmakingScreen } from './screens/MatchmakingScreen';
 import { LobbyScreen } from './screens/LobbyScreen';
 import { SessionScreen } from './screens/SessionScreen';
@@ -59,7 +58,6 @@ function Router() {
 
   switch (route) {
     case 'home': return <HomeScreen />;
-    case 'reels': return <ReelsScreen />;
     case 'matchmaking': return <MatchmakingScreen />;
     case 'lobby': return session ? <LobbyScreen /> : <HomeScreen />;
     case 'announce':
