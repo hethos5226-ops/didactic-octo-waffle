@@ -1,18 +1,23 @@
 import { useState } from 'react';
-import { isValidEmail, signInWithEmail, storedAccount } from '../auth/providers';
+import {
+  isBackendConfigured, isValidEmail, sendPasswordReset, signInWithEmail, signUpWithEmail,
+} from '../backend';
 import { useStore } from '../state/store';
 
 /**
- * Email sign-in, honest about its limits: the account exists on this device
- * only. There is no server, so there is no verification and no password reset,
- * and the screen says so rather than showing a "Forgot password?" link that
- * could not do anything.
+ * Email sign-in and sign-up through Supabase Auth.
+ *
+ * Sign-up and sign-in are separate calls, not one guess: creating an account
+ * for someone who mistyped their password on an existing one is a bad failure,
+ * and Supabase treats them as different operations. Password reset only shows
+ * once there is a backend to send the mail — a dead "Forgot password?" link is
+ * worse than none.
  */
 export function EmailAuthScreen() {
   const { dispatch } = useStore();
-  const existing = storedAccount();
-  const [mode, setMode] = useState<'signUp' | 'signIn'>(existing ? 'signIn' : 'signUp');
-  const [email, setEmail] = useState(existing?.email ?? '');
+  const connected = isBackendConfigured();
+  const [mode, setMode] = useState<'signUp' | 'signIn'>('signUp');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -24,10 +29,23 @@ export function EmailAuthScreen() {
     if (!ready || busy) return;
     setError(null);
     setBusy(true);
-    const result = await signInWithEmail(email, password);
+    const result = mode === 'signUp'
+      ? await signUpWithEmail(email, password)
+      : await signInWithEmail(email, password);
     setBusy(false);
     if (result.status === 'ok') dispatch({ type: 'signedIn', account: result.account });
     else if (result.status === 'error') setError(result.message);
+    else if (result.status === 'not_configured') {
+      setError('No backend is connected yet — see the README to set one up.');
+    }
+  };
+
+  const resetPassword = async () => {
+    if (!isValidEmail(email)) { setError('Enter your email first.'); return; }
+    setBusy(true);
+    const result = await sendPasswordReset(email);
+    setBusy(false);
+    if (result.status === 'error') setError(result.message);
   };
 
   return (
@@ -89,11 +107,18 @@ export function EmailAuthScreen() {
           : 'New here? Create an account'}
       </button>
 
+      {connected && mode === 'signIn' && (
+        <button className="emailauth__switch" onClick={resetPassword} disabled={busy}>
+          Forgot your password?
+        </button>
+      )}
+
       <div className="emailauth__note">
         <span aria-hidden>🔒</span>
         <p className="tiny">
-          Prototype build: this account is stored on this device only. There is no server yet, so
-          there is no email verification and no password reset — signing out erases it.
+          {connected
+            ? 'Your account is stored on the server, so it follows you between devices. Depending on the project settings you may need to confirm your email before signing in.'
+            : 'No backend is connected yet, so this account would live on this device only. See the README for how to connect one.'}
         </p>
       </div>
     </div>

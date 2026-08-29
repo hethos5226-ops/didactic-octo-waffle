@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
-  isConfigured, signInWithProvider, type AuthResult, type ProviderId,
-} from '../auth/providers';
+  isBackendConfigured, signInWithProvider, type AuthResult, type ProviderId,
+} from '../backend';
 import { useStore } from '../state/store';
 
 type Doc = 'terms' | 'privacy' | null;
@@ -9,11 +9,10 @@ type Doc = 'terms' | 'privacy' | null;
 /**
  * First launch.
  *
- * Apple and Google are shown because they are what people expect and because
- * the integration points are real — but neither pretends to work. Tapping one
- * while unconfigured opens a sheet listing exactly what is still needed, which
- * is more useful than a button that silently does nothing and far better than
- * one that fakes a session.
+ * Apple and Google go through Supabase Auth, which performs the token exchange
+ * and Apple's client-secret signing server-side — the parts a browser cannot
+ * do. Until a project is connected and the providers are switched on, tapping
+ * one opens a sheet listing exactly what is missing. Nothing fakes a session.
  */
 export function WelcomeScreen() {
   const { dispatch } = useStore();
@@ -26,10 +25,11 @@ export function WelcomeScreen() {
     setError(null);
     setBusy(provider);
     const result = await signInWithProvider(provider);
+    if (result.status === 'redirecting') return; // The page is leaving.
     setBusy(null);
     if (result.status === 'not_configured') setBlocked(result);
     else if (result.status === 'error') setError(result.message);
-    else dispatch({ type: 'signedIn', account: result.account });
+    else if (result.status === 'ok') dispatch({ type: 'signedIn', account: result.account });
   };
 
   if (doc) {
@@ -75,7 +75,7 @@ export function WelcomeScreen() {
         >
           <span className="auth-btn__mark" aria-hidden>&#63743;</span>
           Continue with Apple
-          {!isConfigured('apple') && <span className="auth-btn__note">Setup needed</span>}
+          {!isBackendConfigured() && <span className="auth-btn__note">Setup needed</span>}
         </button>
 
         <button
@@ -85,7 +85,7 @@ export function WelcomeScreen() {
         >
           <span className="auth-btn__mark auth-btn__mark--g" aria-hidden>G</span>
           Continue with Google
-          {!isConfigured('google') && <span className="auth-btn__note">Setup needed</span>}
+          {!isBackendConfigured() && <span className="auth-btn__note">Setup needed</span>}
         </button>
 
         <button
@@ -112,12 +112,15 @@ export function WelcomeScreen() {
           <div className="sheet__panel" onClick={(e) => e.stopPropagation()}>
             <div className="sheet__grip" aria-hidden />
             <h2 className="sheet__title">
-              {blocked.provider === 'apple' ? 'Sign in with Apple' : 'Sign in with Google'} isn't
-              configured yet
+              {blocked.provider === 'apple'
+                ? 'Sign in with Apple'
+                : blocked.provider === 'google'
+                  ? 'Sign in with Google'
+                  : 'Email sign-in'}{' '}
+              isn't connected yet
             </h2>
             <p className="subtitle">
-              The app is wired up for it — what's missing is the account setup, which has to be
-              done outside the code. You'll need:
+              The app is wired up for it — what's missing is set up outside the code. You'll need:
             </p>
             <ul className="sheet__list">
               {blocked.missing.map((item) => (

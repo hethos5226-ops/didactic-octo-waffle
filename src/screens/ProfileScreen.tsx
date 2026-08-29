@@ -1,11 +1,11 @@
 import { Avatar } from '../components/Avatar';
 import { FeedScoreRing } from '../components/FeedScoreRing';
-import { PEOPLE } from '../data/people';
+import { useEffect, useState } from 'react';
+import { lookupPeople, mutualsWith, type DirectoryPerson } from '../data/directory';
 import { SCORE_CATEGORIES } from '../data/reactions';
 import { LEVEL_TITLES, progressionFromXp, titleForLevel } from '../data/levels';
 import { VIBES } from '../data/vibes';
 import { sharedTags } from '../data/hashtags';
-import { mutualFriends } from '../data/social';
 import { formatCount } from '../data/content';
 import { feedScoreFrom, percentages } from '../state/scoring';
 import { useStore } from '../state/store';
@@ -15,10 +15,34 @@ export function ProfileScreen() {
   const { state, dispatch } = useStore();
   const profile = state.profile!;
   const viewingId = state.viewingPersonId;
-  const other = viewingId ? PEOPLE.find((p) => p.id === viewingId) : null;
+
+  // Somebody else's profile comes from the directory, so it is a real row once
+  // a backend is connected and the built-in cast when it is not.
+  const [other, setOther] = useState<DirectoryPerson | null>(null);
+  useEffect(() => {
+    if (!viewingId) { setOther(null); return; }
+    let live = true;
+    lookupPeople([viewingId]).then((people) => {
+      if (live) setOther(people[0] ?? null);
+    });
+    return () => { live = false; };
+  }, [viewingId]);
+
+  // While the lookup is in flight there is nothing to render for them.
+  if (viewingId && !other) {
+    return (
+      <div className="screen profile">
+        <header className="profile__nav">
+          <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
+          <span className="eyebrow">PROFILE</span>
+        </header>
+        <p className="subtitle profile__private">Loading…</p>
+      </div>
+    );
+  }
 
   const isMe = !other;
-  const level = isMe ? progressionFromXp(profile.xp).level : other!.level;
+  const level = isMe ? progressionFromXp(profile.xp).level : levelFrom(other!.id);
   const progress = progressionFromXp(profile.xp);
   const title = titleForLevel(level);
 
@@ -27,13 +51,13 @@ export function ProfileScreen() {
   const pcts: Record<CategoryId, number> = isMe
     ? percentages(profile.tallies)
     : {
-        funny: clamp(other!.feedScore + spread(other!.id, 0)),
-        chaotic: clamp(other!.feedScore + spread(other!.id, 1)),
-        fire: clamp(other!.feedScore + spread(other!.id, 2)),
-        wtf: clamp(other!.feedScore + spread(other!.id, 3)),
-        good: clamp(other!.feedScore + spread(other!.id, 4)),
+        funny: clamp(scoreFrom(other!.id) + spread(other!.id, 0)),
+        chaotic: clamp(scoreFrom(other!.id) + spread(other!.id, 1)),
+        fire: clamp(scoreFrom(other!.id) + spread(other!.id, 2)),
+        wtf: clamp(scoreFrom(other!.id) + spread(other!.id, 3)),
+        good: clamp(scoreFrom(other!.id) + spread(other!.id, 4)),
       };
-  const score = isMe ? feedScoreFrom(pcts) : other!.feedScore;
+  const score = isMe ? feedScoreFrom(pcts) : scoreFrom(other!.id);
   const vibes = isMe ? profile.vibes : other!.vibes;
   const tags = isMe ? profile.hashtags : other!.hashtags;
   const common = isMe ? [] : sharedTags(profile.hashtags, other!.hashtags);
@@ -41,15 +65,15 @@ export function ProfileScreen() {
   const nextTitle = LEVEL_TITLES.find((t) => t.level > level);
   // Followers are simulated for other people (there is no server to count
   // them) and start at zero for you, which is honest for a new account.
-  const followerCount = isMe ? profile.followerCount : 4_200 + other!.level * 1_137;
-  const followingCount = isMe ? profile.following.length : 180 + other!.level * 3;
+  const followerCount = isMe ? profile.followerCount : other!.followerCount;
+  const followingCount = isMe ? profile.following.length : 180 + levelFrom(other!.id) * 3;
   const isFollowing = !isMe && profile.following.includes(other!.id);
 
   // Somebody else's profile is the natural place to act on them.
   const isFriend = !isMe && profile.friends.includes(other!.id);
   const requested = !isMe && profile.sentRequests.includes(other!.id);
   const asked = !isMe && profile.incomingRequests.includes(other!.id);
-  const mutuals = isMe ? [] : mutualFriends(profile.friends, other!);
+  const mutuals = isMe ? [] : mutualsWith(profile.friends, other!.id);
 
   return (
     <div className="screen profile">
@@ -79,11 +103,11 @@ export function ProfileScreen() {
         />
         <Avatar
           emoji={isMe ? profile.avatar : other!.avatar}
-          photo={isMe ? profile.photo : null}
+          photo={isMe ? profile.photo : other!.photo}
           colour={isMe ? profile.colour : other!.colour}
           flag={isMe ? profile.flag : other!.flag}
           size={96}
-          premium={isMe ? profile.premium : other!.level >= 25}
+          premium={isMe ? profile.premium : other!.premium}
         />
         <h1 className="profile__display">
           {isMe ? profile.displayName || profile.handle : other!.handle}
@@ -98,7 +122,7 @@ export function ProfileScreen() {
         <div className="profile__level-pill">
           <span aria-hidden>{title.emoji}</span> LEVEL {level} · {title.title}
         </div>
-        {(isMe ? profile.premium : other!.level >= 25) && (
+        {(isMe ? profile.premium : other!.premium) && (
           <div className="profile__premium-pill">👑 PREMIUM</div>
         )}
       </div>
@@ -179,15 +203,19 @@ export function ProfileScreen() {
       )}
 
       <div className="profile__stats">
-        <Stat emoji="❤️" value={isMe ? profile.profileLikes : 1284} label="Profile likes" />
+        <Stat emoji="❤️" value={isMe ? profile.profileLikes : other!.followerCount} label="Profile likes" />
         <Stat
           emoji="👥"
-          value={isMe ? profile.friends.length : 48}
+          value={isMe ? profile.friends.length : levelFrom(other!.id) * 2}
           label="Friends"
           onClick={isMe ? () => dispatch({ type: 'go', route: 'friends' }) : undefined}
         />
-        <Stat emoji="🎬" value={isMe ? profile.roundsScrolled : 96} label="Rounds scrolled" />
-        <Stat emoji="✨" value={isMe ? profile.reactionsReceived : 5401} label="Reactions got" />
+        <Stat emoji="🎬" value={isMe ? profile.roundsScrolled : levelFrom(other!.id) * 4} label="Rounds scrolled" />
+        <Stat
+          emoji="✨"
+          value={isMe ? profile.reactionsReceived : levelFrom(other!.id) * 180}
+          label="Reactions got"
+        />
       </div>
 
       <div className="card profile__vibes">
@@ -313,6 +341,28 @@ function Stat({ emoji, value, label, onClick }: StatProps) {
       <span className="stat__chevron" aria-hidden>›</span>
     </button>
   );
+}
+
+/**
+ * Level and feed score for someone else.
+ *
+ * Both are earned by playing, and there is no shared game state yet — so
+ * rather than showing a blank, they are derived from the person's id. Stable
+ * per person, and replaced the moment matches are recorded against real
+ * accounts.
+ */
+function levelFrom(id: string): number {
+  return 4 + (hash(id) % 44);
+}
+
+function scoreFrom(id: string): number {
+  return 62 + (hash(id) % 34);
+}
+
+function hash(seed: string): number {
+  let h = 0;
+  for (let n = 0; n < seed.length; n++) h = (h * 31 + seed.charCodeAt(n)) % 9973;
+  return h;
 }
 
 function spread(seed: string, i: number): number {

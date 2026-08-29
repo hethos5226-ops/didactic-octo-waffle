@@ -1,5 +1,5 @@
 import {
-  createContext, useContext, useEffect, useMemo, useReducer,
+  createContext, useContext, useEffect, useMemo, useReducer, useRef,
   type Dispatch, type ReactNode,
 } from 'react';
 import { PEOPLE, type Person } from '../data/people';
@@ -13,10 +13,24 @@ import type {
   AppNotification, AppState, CategoryId, GroupSize, LobbyMode, Member, Profile,
   MatchSummary, RoundResult, Route, SessionState, Tab,
 } from './types';
-import { clearStoredAccount, type AuthAccount } from '../auth/providers';
+import {
+  currentAccount, fetchProfile, isBackendConfigured, markNotificationsRead,
+  onAuthChange, recordMatch, respondToRequest, saveProfile as saveProfileRemote,
+  sendFriendRequest, setFollowing, signOut as signOutRemote, uploadAvatar,
+  type AuthAccount,
+} from '../backend';
 
 const STORAGE_KEY = 'scroll.profile.v1';
 
+/**
+ * Persistence has two modes, and the app must work in both.
+ *
+ * With a Supabase project configured, the database is the record and
+ * localStorage is only a cache that makes the first paint instant. Without
+ * one — which is the state until a project exists — localStorage *is* the
+ * record, exactly as it was before. Branching here rather than at every call
+ * site keeps the reducer, and every screen, unchanged.
+ */
 function loadProfile(): Profile | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -56,13 +70,19 @@ function saveProfile(profile: Profile | null) {
 }
 
 export function newProfile(input: {
+  /**
+   * The auth user's id. This has to be the profile's primary key: the RLS
+   * policy on `profiles` is `auth.uid() = id`, so a row with any other id is
+   * rejected by the database rather than silently written.
+   */
+  id: string;
   handle: string; displayName: string; bio: string;
   avatar: string; photo: string | null; colour: string;
   country: string; flag: string; vibes: VibeId[]; hashtags: string[];
   authProvider: Profile['authProvider']; email: string | null;
 }): Profile {
   return {
-    id: 'me',
+    id: input.id,
     handle: input.handle,
     displayName: input.displayName || input.handle,
     bio: input.bio,
@@ -191,6 +211,7 @@ export function makeLobbyCode(): string {
 export type Action =
   | { type: 'signUp'; profile: Profile }
   | { type: 'signedIn'; account: AuthAccount }
+  | { type: 'hydrate'; profile: Profile; account: AuthAccount }
   | { type: 'setTab'; tab: Tab }
   | { type: 'toggleFollow'; id: string }
   | { type: 'signOut' }
@@ -260,7 +281,7 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, profile: action.profile, route: 'home', tab: 'home', history: [] };
 
     case 'signOut':
-      clearStoredAccount();
+      // The remote sign-out is fired by the mirror; this clears the local copy.
       return { ...initialState };
 
     case 'go':
@@ -657,6 +678,17 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'hydrate':
+      // The server's copy wins over whatever was cached locally.
+      return {
+        ...state,
+        profile: action.profile,
+        account: action.account,
+        route: action.profile.onboarded ? 'home' : 'onboarding',
+        tab: 'home',
+        history: [],
+      };
+
     case 'signedIn': {
       // A returning account already has a profile, so onboarding is skipped.
       const hasProfile = Boolean(state.profile);
@@ -762,6 +794,47 @@ interface Store {
 
 const StoreContext = createContext<Store | null>(null);
 
+/**
+ * Mirrors relationship actions into the database.
+ *
+ * These live outside the reducer because a reducer must stay pure — it is
+ * called during render and may run twice. The action is applied locally first
+ * so the UI responds immediately, and the write follows.
+ */
+function mirrorToBackend(action: Action, state: AppState) {
+  if (!isBackendConfigured() || !state.profile) return;
+  const selfId = state.profile.id;
+
+  switch (action.type) {
+    case 'sendFriendRequest':
+      void sendFriendRequest(selfId, action.id);
+      break;
+    case 'acceptFriendRequest':
+      void respondToRequest(selfId, action.id, true);
+      break;
+    case 'declineFriendRequest':
+      void respondToRequest(selfId, action.id, false);
+      break;
+    case 'toggleFollow':
+      void setFollowing(selfId, action.id, !state.profile.following.includes(action.id));
+      break;
+    case 'markNotificationsRead':
+      void markNotificationsRead(selfId);
+      break;
+    case 'finishSession': {
+      // The summary is built by the reducer, so read it back after the fact.
+      const summary = state.session ? summariseMatch(state.session) : null;
+      if (summary) void recordMatch(selfId, summary);
+      break;
+    }
+    case 'signOut':
+      void signOutRemote();
+      break;
+    default:
+      break;
+  }
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     // A stored profile means both signed in and onboarded, so a returning
@@ -783,10 +856,88 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
   });
 
+  // The local copy is written on every change: it is the record when there is
+  // no backend, and the warm-start cache when there is.
   useEffect(() => { saveProfile(state.profile); }, [state.profile]);
 
-  const value = useMemo(() => ({ state, dispatch }), [state]);
+  useBackendSync(state, dispatch);
+
+  // The state at the time of dispatch is what the mirror needs (to know, for
+  // example, whether a follow is being added or removed), so it is captured
+  // through a ref rather than read after the reducer has already run.
+  const latest = useRef(state);
+  latest.current = state;
+
+  const dispatchAndMirror = useMemo<Dispatch<Action>>(
+    () => (action: Action) => {
+      mirrorToBackend(action, latest.current);
+      dispatch(action);
+    },
+    [],
+  );
+
+  const value = useMemo(
+    () => ({ state, dispatch: dispatchAndMirror }),
+    [state, dispatchAndMirror],
+  );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
+}
+
+/**
+ * Keeps the database in step with the store.
+ *
+ * Deliberately one-directional and debounced: the reducer stays synchronous
+ * and the UI never waits on the network, which is what allows the existing
+ * screens to work untouched. A failed write is not fatal — the local copy
+ * still holds it, and the next change retries the whole profile.
+ */
+function useBackendSync(state: AppState, dispatch: Dispatch<Action>) {
+  const profile = state.profile;
+  const hydrated = useRef(false);
+
+  // On boot, and on OAuth return, adopt whatever the server has.
+  useEffect(() => {
+    if (!isBackendConfigured()) return;
+    let cancelled = false;
+
+    const adopt = async (account: AuthAccount | null) => {
+      if (cancelled) return;
+      if (!account) {
+        hydrated.current = false;
+        return;
+      }
+      const remote = await fetchProfile(account);
+      if (cancelled) return;
+      hydrated.current = true;
+      if (remote) dispatch({ type: 'hydrate', profile: remote, account });
+      else dispatch({ type: 'signedIn', account });
+    };
+
+    currentAccount().then(adopt);
+    const unsubscribe = onAuthChange(adopt);
+    return () => { cancelled = true; unsubscribe(); };
+  }, [dispatch]);
+
+  // Push profile changes back, coalesced so a burst of reducer updates during
+  // a session becomes one write rather than dozens.
+  useEffect(() => {
+    if (!isBackendConfigured() || !profile || !hydrated.current) return;
+    const timer = window.setTimeout(async () => {
+      // A freshly picked photo is still a data URL; move it to Storage first
+      // so the row holds a link rather than a base64 payload.
+      if (profile.photo?.startsWith('data:')) {
+        const url = await uploadAvatar(profile.id, profile.photo);
+        if (url) {
+          dispatch({ type: 'updateProfile', changes: { photo: url } });
+          return;
+        }
+      }
+      await saveProfileRemote(profile);
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [profile, dispatch]);
+
+  return null;
 }
 
 export function useStore(): Store {

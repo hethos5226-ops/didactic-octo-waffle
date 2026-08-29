@@ -50,37 +50,71 @@ npx serve scroll-prototype
 
 ---
 
-## Configuring real sign-in
+## Connecting the backend
 
-Apple and Google are wired up to the point where **only credentials are
-missing**: the buttons, the call, the result handling and the error surface all
-exist in `src/auth/providers.ts`. What they deliberately do *not* do is pretend
-to succeed — tapping one today opens a sheet listing what is still needed. A
-fake "signed in with Apple" would hide the work still to do, and that is the
-kind of thing that quietly ships.
+The app runs in **two modes**, and both are real:
 
-Copy `.env.example` to `.env.local` and fill in:
+| | No project configured | Project configured |
+|---|---|---|
+| Accounts | Device-local, one browser | Supabase Auth, follows you between devices |
+| Apple / Google | Refuses, and says what is missing | Real OAuth through Supabase |
+| Email | Works, device-local | Real sign-up, sign-in and password reset |
+| Profiles, friends, matches | `localStorage` | Postgres with row-level security |
+| Directory | The built-in cast | Real profiles |
 
-### Sign in with Apple
-1. **A paid Apple Developer Program membership** — $99/year. There is no free tier for this.
-2. A **Services ID** (not an App ID) with "Sign in with Apple" enabled.
-3. A **private key (.p8)**, plus its **Key ID** and your **Team ID**.
-4. `VITE_APPLE_CLIENT_ID` and `VITE_APPLE_REDIRECT_URI`.
-5. **A server endpoint.** Apple's client secret is a JWT you sign with the .p8
-   key. That key can never go in the app — anything bundled into the client is
-   readable by anyone who opens the site.
+The unconfigured mode is not a stub — it is the state the app is in until you
+create a project, and keeping it working means the app stays demonstrable
+throughout. The UI says which mode it is in rather than implying otherwise.
 
-### Sign in with Google
-1. A **Google Cloud project** with an OAuth consent screen configured.
-2. An **OAuth 2.0 Client ID** (iOS and/or Web).
-3. `VITE_GOOGLE_CLIENT_ID` and `VITE_GOOGLE_REDIRECT_URI`.
-4. Your redirect URI added to that client's allowed list.
-5. **A server endpoint** to verify the ID token. Verifying it in the browser
-   proves nothing — anyone can send you any token.
+### 1. Create the project
 
-Both need the same thing before they are real: a backend. Until then, **email
-sign-in works** but is device-local — no verification, no password reset, and
-signing out erases it. The UI says so rather than implying otherwise.
+1. Make a project at [supabase.com](https://supabase.com) — the free tier is enough.
+2. **Project Settings → API**: copy the Project URL and the `anon` key.
+3. `cp .env.example .env.local` and paste them in.
+4. **SQL Editor**: paste and run `supabase/migrations/0001_init.sql`.
+
+That is everything email sign-in needs. It creates the tables, the row-level
+security policies, the follower-count trigger and the `avatars` storage bucket.
+
+> The `anon` key is public and safe to ship. The **service-role key is not** —
+> it bypasses row-level security completely and must never appear in the app.
+
+### 2. Sign in with Google
+
+1. Google Cloud Console → **APIs & Services → Credentials** → OAuth client ID (Web).
+2. Configure the OAuth consent screen if prompted.
+3. In Supabase: **Authentication → Providers → Google**, paste the Client ID and secret.
+4. Copy the callback URL Supabase shows you into Google's **Authorised redirect URIs**.
+
+### 3. Sign in with Apple
+
+1. **An Apple Developer Program membership** — paid, roughly £79/$99 a year. There is no free tier for this, and it is the only hard blocker in the list.
+2. Create a **Services ID** (not an App ID) and enable "Sign in with Apple".
+3. Create a **private key (.p8)**; note its **Key ID** and your **Team ID**.
+4. In Supabase: **Authentication → Providers → Apple**, paste the Services ID, Team ID, Key ID and the .p8 contents.
+5. Add Supabase's callback URL to the Services ID's **Return URLs**.
+
+Supabase signs Apple's client secret for you, which is why no server of our own
+is needed. The .p8 key stays in the Supabase dashboard and never comes near the
+app bundle.
+
+### 4. Email confirmation
+
+Supabase enables "Confirm email" by default, so a new account cannot sign in
+until the link is clicked. The app says so rather than spinning. To skip it
+while testing: **Authentication → Providers → Email → Confirm email → off**.
+
+### What the schema enforces
+
+The policies were run against a real PostgreSQL instance and checked, not
+merely written:
+
+- Profiles are a public directory — you must be able to find people to play with — but only the owner can edit their own row.
+- Only the person who *received* a friend request can accept it. Without that, anyone could mark their own outgoing request accepted.
+- A notification's actor must be the person creating it, so nobody can fill your inbox with messages that appear to come from someone else.
+- Matches are private to the player they belong to.
+- Handles are lowercase, 2–18 characters, and unique.
+- You cannot friend yourself, and follower counts are kept by a trigger rather than trusted from the client.
 
 ---
 

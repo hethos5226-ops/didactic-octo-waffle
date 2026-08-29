@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Avatar } from '../components/Avatar';
-import { PEOPLE } from '../data/people';
+import { localPerson } from '../data/directory';
 import { useStore } from '../state/store';
 import type { AppNotification, MatchSummary } from '../state/types';
 
@@ -127,7 +127,9 @@ function MatchCard({ match }: { match: MatchSummary }) {
 function Row({ notification }: { notification: AppNotification }) {
   const { state, dispatch } = useStore();
   const profile = state.profile!;
-  const person = PEOPLE.find((p) => p.id === notification.fromId);
+  // Notifications from real accounts carry a uuid the built-in cast will not
+  // match; the row is skipped rather than rendering a blank.
+  const person = localPerson(notification.fromId);
   if (!person) return null;
 
   const stillPending =

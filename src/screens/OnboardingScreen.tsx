@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AVATARS, COUNTRIES, PEOPLE } from '../data/people';
+import { isBackendConfigured, isHandleAvailable } from '../backend';
 import { vibesForProfile } from '../data/hashtags';
 import { AvatarPicker } from '../components/AvatarPicker';
 import { HashtagPicker } from '../components/HashtagPicker';
@@ -32,8 +33,32 @@ export function OnboardingScreen() {
   const [intro, setIntro] = useState(0);
 
   const cleanHandle = handle.trim().replace(/^@+/, '').replace(/\s+/g, '').toLowerCase();
-  const taken = PEOPLE.some((p) => p.handle.toLowerCase() === cleanHandle);
-  const handleOk = cleanHandle.length >= 2 && !taken;
+  const [taken, setTaken] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  // Checked against the database when there is one, so a username is actually
+  // unique rather than merely unused by the demo cast. Debounced, because this
+  // is a query per keystroke otherwise.
+  useEffect(() => {
+    if (cleanHandle.length < 2) { setTaken(false); return; }
+    if (!isBackendConfigured()) {
+      setTaken(PEOPLE.some((p) => p.handle.toLowerCase() === cleanHandle));
+      return;
+    }
+    let live = true;
+    setChecking(true);
+    const timer = window.setTimeout(async () => {
+      const available = await isHandleAvailable(cleanHandle, account?.userId);
+      if (!live) return;
+      setChecking(false);
+      // A null answer means the check itself failed; the unique index on the
+      // column is the real guard, so this does not block on a network blip.
+      setTaken(available === false);
+    }, 350);
+    return () => { live = false; clearTimeout(timer); };
+  }, [cleanHandle, account?.userId]);
+
+  const handleOk = cleanHandle.length >= 2 && !taken && !checking;
 
   const canContinue =
     step === 0 ? handleOk
@@ -45,6 +70,9 @@ export function OnboardingScreen() {
     dispatch({
       type: 'signUp',
       profile: newProfile({
+        // Falls back to a local id only when there is no auth user, which is
+        // the no-backend case.
+        id: account?.userId ?? 'me',
         handle: cleanHandle,
         displayName: displayName.trim() || cleanHandle,
         bio: bio.trim(),
@@ -96,7 +124,7 @@ export function OnboardingScreen() {
               />
               {cleanHandle.length >= 2 && (
                 <span className={`onboarding__check${taken ? ' is-bad' : ''}`}>
-                  {taken ? '✕' : '✓'}
+                  {checking ? '…' : taken ? '✕' : '✓'}
                 </span>
               )}
             </div>

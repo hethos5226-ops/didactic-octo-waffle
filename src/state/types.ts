@@ -1,6 +1,6 @@
 import type { VibeId } from '../data/vibes';
 import type { XpAward } from '../data/levels';
-import type { AuthAccount } from '../auth/providers';
+import type { AuthAccount } from '../backend';
 
 export type CategoryId = 'funny' | 'chaotic' | 'fire' | 'wtf' | 'good';
 
