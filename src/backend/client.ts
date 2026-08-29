@@ -47,7 +47,16 @@ export function supabase(): SupabaseClient | null {
   return cached;
 }
 
-/** Where OAuth should come back to. Respects a subpath deploy. */
+/**
+ * Where an email confirmation, a password reset or an OAuth return should come
+ * back to.
+ *
+ * Resolved against the current page rather than the origin, which is what
+ * makes a subpath deploy work. GitHub Pages serves a project site from
+ * /<repo>/, and `base` is './' (see vite.config.ts), so resolving against the
+ * origin would produce https://user.github.io/ — dropping the repo and landing
+ * every confirmation link on a 404.
+ */
 export function authRedirectUrl(): string {
-  return new URL(import.meta.env.BASE_URL, window.location.origin).toString();
+  return new URL(import.meta.env.BASE_URL, window.location.href).toString();
 }
