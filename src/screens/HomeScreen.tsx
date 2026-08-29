@@ -2,6 +2,7 @@ import { progressionFromXp, titleForLevel } from '../data/levels';
 import { feedScoreFrom, percentages } from '../state/scoring';
 import { useStore } from '../state/store';
 import { Avatar } from '../components/Avatar';
+import { AdSlot } from '../components/AdSlot';
 import type { GroupSize } from '../state/types';
 
 const MODES: { size: GroupSize; emoji: string; label: string; hint: string }[] = [
@@ -16,18 +17,37 @@ export function HomeScreen() {
   const progress = progressionFromXp(profile.xp);
   const title = titleForLevel(progress.level);
   const score = feedScoreFrom(percentages(profile.tallies));
+  const unread = profile.notifications.filter((n) => !n.read).length;
 
   return (
     <div className="screen home">
       <header className="home__head">
         <h1 className="wordmark">SCROLL</h1>
+        <div className="row home__head-actions">
+        <button
+          className="home__bell"
+          onClick={() => dispatch({ type: 'go', route: 'notifications' })}
+          aria-label={unread > 0 ? `Activity, ${unread} new` : 'Activity'}
+        >
+          🔔
+          {unread > 0 && <span className="home__bell-dot">{unread > 9 ? '9+' : unread}</span>}
+        </button>
+
         <button
           className="home__me"
           onClick={() => dispatch({ type: 'viewPerson', id: null })}
           aria-label="Your profile"
         >
-          <Avatar emoji={profile.avatar} colour={profile.colour} flag={profile.flag} size={42} />
+          <Avatar
+            emoji={profile.avatar}
+            photo={profile.photo}
+            colour={profile.colour}
+            flag={profile.flag}
+            size={42}
+            premium={profile.premium}
+          />
         </button>
+        </div>
       </header>
 
       {/* RANDOM — the headline action. Deliberately the biggest, brightest
@@ -92,7 +112,14 @@ export function HomeScreen() {
         className="home__profile"
         onClick={() => dispatch({ type: 'viewPerson', id: null })}
       >
-        <Avatar emoji={profile.avatar} colour={profile.colour} flag={profile.flag} size={56} />
+        <Avatar
+          emoji={profile.avatar}
+          photo={profile.photo}
+          colour={profile.colour}
+          flag={profile.flag}
+          size={56}
+          premium={profile.premium}
+        />
         <div className="grow home__profile-body">
           <div className="home__profile-handle">@{profile.handle}</div>
           <div className="home__profile-level">
@@ -111,14 +138,33 @@ export function HomeScreen() {
         </div>
       </button>
 
-      {profile.friends.length > 0 && (
+      {!profile.premium && (
         <button
-          className="home__friends"
-          onClick={() => dispatch({ type: 'go', route: 'friends' })}
+          className="home__premium"
+          onClick={() => dispatch({ type: 'go', route: 'premium' })}
         >
-          👥 {profile.friends.length} {profile.friends.length === 1 ? 'friend' : 'friends'} — invite them to a lobby →
+          <span className="home__premium-crown" aria-hidden>👑</span>
+          <div className="grow">
+            <div className="home__premium-title">GO PREMIUM</div>
+            <p className="tiny">No ads, and scroll first in any lobby.</p>
+          </div>
+          <span className="home__premium-arrow" aria-hidden>›</span>
         </button>
       )}
+
+      <AdSlot />
+
+      <button
+        className="home__friends"
+        onClick={() => dispatch({ type: 'go', route: 'friends' })}
+      >
+        {profile.friends.length > 0
+          ? `👥 ${profile.friends.length} ${profile.friends.length === 1 ? 'friend' : 'friends'} — invite them to a lobby →`
+          : '👥 Find friends — search people and see who you might know →'}
+        {profile.incomingRequests.length > 0 && (
+          <span className="home__friends-badge">{profile.incomingRequests.length}</span>
+        )}
+      </button>
     </div>
   );
 }

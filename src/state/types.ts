@@ -14,21 +14,42 @@ export type Tallies = Record<CategoryId, CategoryTally>;
 export interface Profile {
   id: string;
   handle: string;
+  /** Emoji face — always set, and the fallback whenever a photo is missing. */
   avatar: string;
+  /** Optional profile photo as a downscaled data URL. */
+  photo: string | null;
   colour: string;
   country: string;
   flag: string;
   vibes: VibeId[];
+  /** Free-form interests, normalised without the leading '#'. */
+  hashtags: string[];
+  premium: boolean;
   xp: number;
   tallies: Tallies;
   profileLikes: number;
   friends: string[];
+  /** People who have asked to be your friend and are waiting on you. */
+  incomingRequests: string[];
+  /** People you have asked, still waiting on them. */
+  sentRequests: string[];
+  notifications: AppNotification[];
   /** People who liked or friended you, newest first — shown on the profile. */
   sessionsPlayed: number;
   roundsScrolled: number;
   reactionsSent: number;
   reactionsReceived: number;
   createdAt: number;
+}
+
+export type NotificationKind = 'request' | 'accepted' | 'liked';
+
+export interface AppNotification {
+  id: number;
+  kind: NotificationKind;
+  fromId: string;
+  at: number;
+  read: boolean;
 }
 
 export type LobbyMode = 'random' | 'private';
@@ -38,12 +59,15 @@ export interface Member {
   id: string;
   handle: string;
   avatar: string;
+  photo: string | null;
   colour: string;
   country: string;
   flag: string;
   level: number;
   feedScore: number;
   vibes: VibeId[];
+  hashtags: string[];
+  premium: boolean;
   isMe: boolean;
   /** Which side of a duo/trio match this member arrived on. */
   team: 'yours' | 'theirs';
@@ -97,6 +121,8 @@ export interface SessionState {
   /** Person ids this session that have been liked / friend-requested. */
   liked: string[];
   friended: string[];
+  /** Set when a Premium member claims the first turn before the session starts. */
+  claimedFirst: boolean;
 }
 
 export type Route =
@@ -112,11 +138,21 @@ export type Route =
   | 'profile'
   | 'friends'
   | 'createLobby'
-  | 'joinLobby';
+  | 'joinLobby'
+  | 'premium'
+  | 'editProfile'
+  | 'settings'
+  | 'notifications';
 
 export interface AppState {
   profile: Profile | null;
   route: Route;
+  /**
+   * Where "back" goes. Hard-coding each screen's back target meant Settings ▸
+   * Get Premium ▸ back landed on the profile rather than back in Settings —
+   * a screen reachable from two places cannot know where it came from.
+   */
+  history: Route[];
   /** Profile being viewed on the profile screen; null means "me". */
   viewingPersonId: string | null;
   matchmakingSize: GroupSize;

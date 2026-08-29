@@ -33,6 +33,7 @@ export function VoiceBar({
           <div key={m.id} className="voicebar__person" title={`@${m.handle}`}>
             <Avatar
               emoji={m.avatar}
+              photo={m.photo}
               colour={m.colour}
               size={34}
               speaking={speakingId === m.id && !(m.isMe && micMuted)}

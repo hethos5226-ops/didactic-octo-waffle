@@ -10,7 +10,8 @@ import {
   applyRatings, emptyTallies, feedScoreFrom, percentages, ratingFromReactions,
 } from './scoring';
 import type {
-  AppState, CategoryId, GroupSize, LobbyMode, Member, Profile, RoundResult, Route,
+  AppNotification, AppState, CategoryId, GroupSize, LobbyMode, Member, Profile,
+  RoundResult, Route,
 } from './types';
 
 const STORAGE_KEY = 'scroll.profile.v1';
@@ -21,8 +22,15 @@ function loadProfile(): Profile | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Profile;
     if (!parsed?.handle) return null;
-    // Tallies gained categories over time; backfill anything missing.
+    // The profile shape has grown; backfill anything a stored one predates so
+    // an existing player is never dropped back to the sign-up screen.
     parsed.tallies = { ...emptyTallies(), ...parsed.tallies };
+    parsed.hashtags = parsed.hashtags ?? [];
+    parsed.photo = parsed.photo ?? null;
+    parsed.premium = parsed.premium ?? false;
+    parsed.incomingRequests = parsed.incomingRequests ?? [];
+    parsed.sentRequests = parsed.sentRequests ?? [];
+    parsed.notifications = parsed.notifications ?? [];
     return parsed;
   } catch {
     return null;
@@ -39,21 +47,28 @@ function saveProfile(profile: Profile | null) {
 }
 
 export function newProfile(input: {
-  handle: string; avatar: string; colour: string;
-  country: string; flag: string; vibes: VibeId[];
+  handle: string; avatar: string; photo: string | null; colour: string;
+  country: string; flag: string; vibes: VibeId[]; hashtags: string[];
 }): Profile {
   return {
     id: 'me',
     handle: input.handle,
     avatar: input.avatar,
+    photo: input.photo,
     colour: input.colour,
     country: input.country,
     flag: input.flag,
     vibes: input.vibes,
+    hashtags: input.hashtags,
+    premium: false,
     xp: 0,
     tallies: emptyTallies(),
     profileLikes: 0,
     friends: [],
+    // A brand-new account with an empty inbox cannot show what the bell is
+    // for, so two people are already waiting. In a real build these arrive
+    // from the server.
+    ...seedSocial(),
     sessionsPlayed: 0,
     roundsScrolled: 0,
     reactionsSent: 0,
@@ -62,21 +77,38 @@ export function newProfile(input: {
   };
 }
 
+let notificationId = 0;
+
+function seedSocial(): Pick<Profile, 'incomingRequests' | 'sentRequests' | 'notifications'> {
+  const asking = shuffled(PEOPLE.map((p) => p.id)).slice(0, 2);
+  return {
+    incomingRequests: asking,
+    sentRequests: [],
+    notifications: asking.map((id) => notify('request', id)),
+  };
+}
+
+function notify(kind: AppNotification['kind'], fromId: string): AppNotification {
+  return { id: ++notificationId, kind, fromId, at: Date.now(), read: false };
+}
+
 function memberFromPerson(p: Person, team: 'yours' | 'theirs'): Member {
   return {
-    id: p.id, handle: p.handle, avatar: p.avatar, colour: p.colour,
+    id: p.id, handle: p.handle, avatar: p.avatar, photo: null, colour: p.colour,
     country: p.country, flag: p.flag, level: p.level, feedScore: p.feedScore,
-    vibes: p.vibes, isMe: false, team, ready: true,
+    vibes: p.vibes, hashtags: p.hashtags, premium: p.level >= 25,
+    isMe: false, team, ready: true,
   };
 }
 
 function memberFromProfile(profile: Profile): Member {
   const { level } = progressionFromXp(profile.xp);
   return {
-    id: 'me', handle: profile.handle, avatar: profile.avatar, colour: profile.colour,
-    country: profile.country, flag: profile.flag, level,
+    id: 'me', handle: profile.handle, avatar: profile.avatar, photo: profile.photo,
+    colour: profile.colour, country: profile.country, flag: profile.flag, level,
     feedScore: feedScoreFrom(percentages(profile.tallies)),
-    vibes: profile.vibes, isMe: true, team: 'yours', ready: true,
+    vibes: profile.vibes, hashtags: profile.hashtags, premium: profile.premium,
+    isMe: true, team: 'yours', ready: true,
   };
 }
 
@@ -89,9 +121,18 @@ function shuffled<T>(items: T[]): T[] {
   return copy;
 }
 
-/** Pick strangers, never repeating anyone already in the lobby. */
+/**
+ * Pick strangers, never repeating anyone already in the lobby.
+ *
+ * `exclude` is matched against both ids and handles: the cast contains a
+ * @charley, and a lobby listing two of them reads as a bug, so the player's
+ * own handle is excluded too.
+ */
 export function strangers(count: number, exclude: string[] = []): Person[] {
-  return shuffled(PEOPLE.filter((p) => !exclude.includes(p.id))).slice(0, count);
+  const blocked = new Set(exclude.map((e) => e.toLowerCase()));
+  return shuffled(
+    PEOPLE.filter((p) => !blocked.has(p.id.toLowerCase()) && !blocked.has(p.handle.toLowerCase())),
+  ).slice(0, count);
 }
 
 export function makeLobbyCode(): string {
@@ -105,6 +146,7 @@ export type Action =
   | { type: 'signUp'; profile: Profile }
   | { type: 'signOut' }
   | { type: 'go'; route: Route }
+  | { type: 'back' }
   | { type: 'viewPerson'; id: string | null }
   | { type: 'startMatchmaking'; size: GroupSize }
   | { type: 'matchFound'; members: Member[] }
@@ -126,11 +168,21 @@ export type Action =
   | { type: 'likePerson'; id: string }
   | { type: 'addFriend'; id: string }
   | { type: 'dismissLevelUp' }
-  | { type: 'dismissToast' };
+  | { type: 'dismissToast' }
+  | { type: 'buyPremium' }
+  | { type: 'cancelPremium' }
+  | { type: 'claimFirstTurn' }
+  | { type: 'sendFriendRequest'; id: string }
+  | { type: 'acceptFriendRequest'; id: string }
+  | { type: 'declineFriendRequest'; id: string }
+  | { type: 'remoteAcceptedRequest'; id: string }
+  | { type: 'markNotificationsRead' }
+  | { type: 'updateProfile'; changes: Partial<Pick<Profile, 'handle' | 'avatar' | 'photo' | 'colour' | 'country' | 'flag' | 'hashtags' | 'vibes'>> };
 
 export const initialState: AppState = {
   profile: null,
   route: 'auth',
+  history: [],
   viewingPersonId: null,
   matchmakingSize: 1,
   session: null,
@@ -141,6 +193,12 @@ export const initialState: AppState = {
 let liveId = 0;
 let toastId = 0;
 
+const MAX_HISTORY = 12;
+
+function pushHistory(state: AppState): Route[] {
+  return [...state.history, state.route].slice(-MAX_HISTORY);
+}
+
 function toast(emoji: string, text: string) {
   return { emoji, text, id: ++toastId };
 }
@@ -148,16 +206,28 @@ function toast(emoji: string, text: string) {
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
     case 'signUp':
-      return { ...state, profile: action.profile, route: 'home' };
+      return { ...state, profile: action.profile, route: 'home', history: [] };
 
     case 'signOut':
       return { ...initialState };
 
     case 'go':
-      return { ...state, route: action.route };
+      if (action.route === state.route) return state;
+      return { ...state, route: action.route, history: pushHistory(state) };
+
+    case 'back': {
+      const history = [...state.history];
+      const previous = history.pop();
+      return { ...state, route: previous ?? 'home', history };
+    }
 
     case 'viewPerson':
-      return { ...state, viewingPersonId: action.id, route: 'profile' };
+      return {
+        ...state,
+        viewingPersonId: action.id,
+        route: 'profile',
+        history: state.route === 'profile' ? state.history : pushHistory(state),
+      };
 
     case 'startMatchmaking':
       return { ...state, matchmakingSize: action.size, route: 'matchmaking' };
@@ -182,6 +252,7 @@ function reducer(state: AppState, action: Action): AppState {
           results: [],
           liked: [],
           friended: [],
+          claimedFirst: false,
         },
       };
     }
@@ -206,6 +277,7 @@ function reducer(state: AppState, action: Action): AppState {
           results: [],
           liked: [],
           friended: [],
+          claimedFirst: false,
         },
       };
 
@@ -393,12 +465,13 @@ function reducer(state: AppState, action: Action): AppState {
         profile,
         session: null,
         route: 'home',
+        history: [],
         levelUpTo: levelAfter > levelBefore ? levelAfter : state.levelUpTo,
       };
     }
 
     case 'leaveSession':
-      return { ...state, session: null, route: 'home' };
+      return { ...state, session: null, route: 'home', history: [] };
 
     case 'toggleMute': {
       if (!state.session) return state;
@@ -445,6 +518,128 @@ function reducer(state: AppState, action: Action): AppState {
       };
     }
 
+    case 'sendFriendRequest': {
+      if (!state.profile) return state;
+      const { friends, sentRequests, incomingRequests } = state.profile;
+      if (friends.includes(action.id) || sentRequests.includes(action.id)) return state;
+
+      // If they already asked you, sending back is just accepting.
+      if (incomingRequests.includes(action.id)) {
+        return reducer(state, { type: 'acceptFriendRequest', id: action.id });
+      }
+      const person = PEOPLE.find((p) => p.id === action.id);
+      return {
+        ...state,
+        profile: { ...state.profile, sentRequests: [...sentRequests, action.id] },
+        toast: toast('📨', `Request sent to @${person?.handle ?? action.id}`),
+      };
+    }
+
+    case 'acceptFriendRequest': {
+      if (!state.profile) return state;
+      if (state.profile.friends.includes(action.id)) return state;
+      const person = PEOPLE.find((p) => p.id === action.id);
+      const levelBefore = progressionFromXp(state.profile.xp).level;
+      const profile: Profile = {
+        ...state.profile,
+        friends: [...state.profile.friends, action.id],
+        incomingRequests: state.profile.incomingRequests.filter((id) => id !== action.id),
+        sentRequests: state.profile.sentRequests.filter((id) => id !== action.id),
+        profileLikes: state.profile.profileLikes + 1,
+        xp: state.profile.xp + XP.friendAdded,
+        notifications: state.profile.notifications.map((n) =>
+          n.kind === 'request' && n.fromId === action.id ? { ...n, read: true } : n,
+        ),
+      };
+      const levelAfter = progressionFromXp(profile.xp).level;
+      return {
+        ...state,
+        profile,
+        levelUpTo: levelAfter > levelBefore ? levelAfter : state.levelUpTo,
+        toast: toast('🤝', `You and @${person?.handle ?? action.id} are friends!`),
+      };
+    }
+
+    case 'declineFriendRequest': {
+      if (!state.profile) return state;
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          incomingRequests: state.profile.incomingRequests.filter((id) => id !== action.id),
+          notifications: state.profile.notifications.filter(
+            (n) => !(n.kind === 'request' && n.fromId === action.id),
+          ),
+        },
+      };
+    }
+
+    case 'remoteAcceptedRequest': {
+      // Stands in for the other person tapping accept on their phone.
+      if (!state.profile) return state;
+      if (!state.profile.sentRequests.includes(action.id)) return state;
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          friends: [...state.profile.friends, action.id],
+          sentRequests: state.profile.sentRequests.filter((id) => id !== action.id),
+          xp: state.profile.xp + XP.friendAdded,
+          notifications: [notify('accepted', action.id), ...state.profile.notifications].slice(0, 30),
+        },
+      };
+    }
+
+    case 'markNotificationsRead': {
+      if (!state.profile) return state;
+      return {
+        ...state,
+        profile: {
+          ...state.profile,
+          notifications: state.profile.notifications.map((n) => ({ ...n, read: true })),
+        },
+      };
+    }
+
+    case 'buyPremium': {
+      if (!state.profile) return state;
+      return {
+        ...state,
+        profile: { ...state.profile, premium: true },
+        route: state.history[state.history.length - 1] ?? 'home',
+        history: state.history.slice(0, -1),
+        toast: toast('👑', 'Premium unlocked — no more ads!'),
+      };
+    }
+
+    case 'cancelPremium': {
+      if (!state.profile) return state;
+      return {
+        ...state,
+        profile: { ...state.profile, premium: false },
+        toast: toast('👋', 'Premium cancelled'),
+      };
+    }
+
+    case 'claimFirstTurn': {
+      // A Premium perk: jump the shuffle and take the opening round. It only
+      // moves you to the front — everyone else keeps their relative order, so
+      // it is a head start, not a reshuffle of somebody else's session.
+      if (!state.session || !state.profile?.premium) return state;
+      if (state.session.claimedFirst) return state;
+      const order = ['me', ...state.session.order.filter((id) => id !== 'me')];
+      return {
+        ...state,
+        session: { ...state.session, order, claimedFirst: true },
+        toast: toast('👑', "You're scrolling first"),
+      };
+    }
+
+    case 'updateProfile': {
+      if (!state.profile) return state;
+      return { ...state, profile: { ...state.profile, ...action.changes } };
+    }
+
     case 'dismissLevelUp':
       return { ...state, levelUpTo: null };
 
@@ -466,7 +661,12 @@ const StoreContext = createContext<Store | null>(null);
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, undefined, () => {
     const profile = loadProfile();
-    return { ...initialState, profile, route: profile ? ('home' as Route) : ('auth' as Route) };
+    return {
+      ...initialState,
+      profile,
+      route: profile ? ('home' as Route) : ('auth' as Route),
+      history: [],
+    };
   });
 
   useEffect(() => { saveProfile(state.profile); }, [state.profile]);

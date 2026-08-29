@@ -1,0 +1,65 @@
+# Builds the prototype and publishes it to GitHub Pages.
+#
+# Before the first run, Pages has to be turned on once:
+#   Settings → Pages → Build and deployment → Source: "GitHub Actions"
+#
+# Pages on a PRIVATE repository requires a paid GitHub plan. On the free plan
+# the repository has to be public for the site to be served. The build job
+# below runs either way and always uploads a downloadable artifact, so the
+# prototype is still retrievable without publishing anything.
+name: Deploy prototype to Pages
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Typecheck runs as part of `npm run build` (tsc -b && vite build), so a
+      # broken build never gets published.
+      - run: npm run build
+
+      # Downloadable even when Pages is not enabled.
+      - name: Upload build for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: scroll-prototype
+          path: dist
+          retention-days: 30
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

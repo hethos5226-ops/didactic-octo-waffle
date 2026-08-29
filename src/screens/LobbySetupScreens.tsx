@@ -27,7 +27,7 @@ export function CreateLobbyScreen() {
   return (
     <div className="screen createlobby">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">🔒 New lobby</h1>
           <p className="subtitle">Your room, your rules, your friends' terrible feeds.</p>
@@ -95,7 +95,9 @@ export function JoinLobbyScreen() {
     if (!joining) return;
     const timer = setTimeout(() => {
       const me = memberFromProfile(profile);
-      const host = strangers(2).map((p, i) => memberFromPerson(p, i === 0 ? 'yours' : 'theirs'));
+      const host = strangers(2, [profile.handle]).map((p, i) =>
+        memberFromPerson(p, i === 0 ? 'yours' : 'theirs'),
+      );
       const formatted = clean.startsWith('FYP') ? `FYP-${clean.slice(3)}` : `FYP-${clean}`;
       dispatch({ type: 'openLobby', mode: 'private', members: [me, ...host], code: formatted });
     }, 1400);
@@ -105,7 +107,7 @@ export function JoinLobbyScreen() {
   return (
     <div className="screen joinlobby">
       <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
+        <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
           <h1 className="title">Join a lobby</h1>
           <p className="subtitle">Got a code from a mate? Drop it in.</p>
@@ -131,56 +133,6 @@ export function JoinLobbyScreen() {
         onClick={() => setJoining(true)}
       >
         {joining ? 'Knocking… 🚪' : 'Join lobby'}
-      </button>
-    </div>
-  );
-}
-
-/** Your social graph — the thing that quietly forms out of random sessions. */
-export function FriendsScreen() {
-  const { state, dispatch } = useStore();
-  const profile = state.profile!;
-  const friends = PEOPLE.filter((p) => profile.friends.includes(p.id));
-
-  return (
-    <div className="screen friends">
-      <header className="lobby__head">
-        <button className="lobby__back" onClick={() => dispatch({ type: 'go', route: 'home' })}>‹</button>
-        <div className="grow">
-          <h1 className="title">👥 Friends</h1>
-          <p className="subtitle">
-            {friends.length} {friends.length === 1 ? 'person' : 'people'} you met by scrolling.
-          </p>
-        </div>
-      </header>
-
-      <ul className="friends__list">
-        {friends.map((f) => (
-          <li key={f.id} className="friends__item">
-            <Avatar emoji={f.avatar} colour={f.colour} flag={f.flag} size={48} />
-            <div className="grow">
-              <div className="friends__handle">@{f.handle}</div>
-              <div className="tiny">LV {f.level} · ⭐ {f.feedScore} feed score</div>
-            </div>
-            <button
-              className="chip"
-              onClick={() => dispatch({ type: 'viewPerson', id: f.id })}
-            >
-              View
-            </button>
-          </li>
-        ))}
-      </ul>
-
-      {friends.length === 0 && (
-        <p className="subtitle">Nobody yet. Go meet someone 🌎</p>
-      )}
-
-      <button
-        className="btn btn--zap btn--block"
-        onClick={() => dispatch({ type: 'go', route: 'createLobby' })}
-      >
-        🔒 Start an FYP night
       </button>
     </div>
   );
