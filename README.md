@@ -79,6 +79,19 @@ security policies, the follower-count trigger and the `avatars` storage bucket.
 > The `anon` key is public and safe to ship. The **service-role key is not** —
 > it bypasses row-level security completely and must never appear in the app.
 
+Then confirm it actually worked:
+
+```
+npm run check:backend
+```
+
+It checks the environment variables, that the project answers, that every
+table and the `avatars` bucket exist, that row-level security really does
+refuse an anonymous write, and which auth providers are switched on. The
+failures at this stage are quiet ones — a bucket that was never created, or
+RLS left off — so it is worth asking before trusting the backend with a real
+account. It refuses to run at all if it finds a service-role key.
+
 ### 2. Sign in with Google
 
 1. Google Cloud Console → **APIs & Services → Credentials** → OAuth client ID (Web).
