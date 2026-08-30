@@ -1,7 +1,7 @@
 /**
  * Advertising, switched off.
  *
- * SCROLL will eventually need revenue, and advertising is a legitimate way to
+ * SCROLLR will eventually need revenue, and advertising is a legitimate way to
  * get it. What this file exists to prevent is the version of that which is
  * easy to build and hard to undo: an ad system that watches what people do,
  * builds a profile, and sells it. Once behavioural targeting is in the data

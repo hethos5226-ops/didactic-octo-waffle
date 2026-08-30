@@ -79,7 +79,7 @@ jobs:
       - name: Upload build for download
         uses: actions/upload-artifact@v4
         with:
-          name: scroll-prototype
+          name: scrollr-prototype
           path: dist
           retention-days: 30
 

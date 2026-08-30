@@ -37,7 +37,7 @@ jobs:
       # A secret must never reach the bundle, whatever produced it.
       - run: node scripts/guard-build-env.mjs --scan-dist
 
-      # And neither must a third-party host. SCROLL's privacy policy promises
+      # And neither must a third-party host. SCROLLR's privacy policy promises
       # no external requests; this is what makes that promise checkable.
       - run: node scripts/check-no-third-party.mjs
 
@@ -53,7 +53,7 @@ jobs:
         image: postgres:16
         env:
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: scroll_test
+          POSTGRES_DB: scrollr_test
         ports: ['5432:5432']
         options: >-
           --health-cmd pg_isready
@@ -67,7 +67,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Run the policy tests
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/scroll_test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/scrollr_test
         run: ./scripts/test-rls.sh
 
   secrets:

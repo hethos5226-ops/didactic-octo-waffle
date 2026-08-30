@@ -3,7 +3,7 @@ import type { Playback, VideoRef, VideoSourceAdapter, VideoSourceId } from './ty
 /**
  * The registry of video sources.
  *
- * Every provider SCROLL might ever play from is declared here, including the
+ * Every provider SCROLLR might ever play from is declared here, including the
  * ones that are switched off, because a declared-and-disabled source is honest
  * about the shape of the work while an undeclared one invites a session screen
  * to special-case a provider later. Each carries the reason it is off, and
@@ -12,7 +12,7 @@ import type { Playback, VideoRef, VideoSourceAdapter, VideoSourceId } from './ty
  *
  * Only `sample` is on. That is not a limitation to be fixed quickly: hosting
  * or embedding third-party video is where the costs and the terms-of-service
- * risk both live, and SCROLL works without either.
+ * risk both live, and SCROLLR works without either.
  */
 
 /** The built-in demo content the prototype already plays. */
@@ -29,23 +29,23 @@ const sample: VideoSourceAdapter = {
 };
 
 /**
- * Video SCROLL would host itself.
+ * Video SCROLLR would host itself.
  *
  * Off because hosting is the one architectural decision that turns a free
  * prototype into a monthly bill: storage grows and never shrinks, and egress
  * is charged per view, so cost scales with popularity rather than with
- * revenue. Nothing about SCROLL needs it — the shared experience does not
+ * revenue. Nothing about SCROLLR needs it — the shared experience does not
  * depend on owning the pixels.
  */
 const scrollHosted: VideoSourceAdapter = {
   id: 'scroll',
-  name: 'SCROLL-hosted',
+  name: 'SCROLLR-hosted',
   enabled: false,
   rights: 'owned',
   disabledReason:
     'Hosting video means storage and per-view egress costs. Not needed for the shared-viewing experience.',
   toPlayback(): Playback {
-    return { kind: 'unavailable', reason: 'SCROLL does not host video.' };
+    return { kind: 'unavailable', reason: 'SCROLLR does not host video.' };
   },
 };
 
@@ -73,10 +73,10 @@ const youtube: VideoSourceAdapter = {
 /**
  * Instagram.
  *
- * The original idea was for SCROLL to reflect someone's own Reels feed. That
+ * The original idea was for SCROLLR to reflect someone's own Reels feed. That
  * is not something the platform offers: there is no API, public or partner,
  * that returns a user's personal recommendation feed, and obtaining one by
- * automating the app would breach Meta's terms and put both SCROLL and its
+ * automating the app would breach Meta's terms and put both SCROLLR and its
  * users at risk. What does exist is oEmbed for *public* posts, behind an
  * approved Meta app and App Review.
  *

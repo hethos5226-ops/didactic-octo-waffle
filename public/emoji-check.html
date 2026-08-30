@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>SCROLL — emoji check</title>
+    <title>SCROLLR — emoji check</title>
     <style>
       :root {
         --font-emoji: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
@@ -43,7 +43,7 @@
     <h1>Emoji check 🔍</h1>
     <p>
       Open this page on the device you care about. It reports which emoji font
-      the browser actually resolves, so you can confirm what SCROLL renders
+      the browser actually resolves, so you can confirm what SCROLLR renders
       without taking anyone's word for it.
     </p>
 
@@ -138,7 +138,7 @@
       if (resolved === 'Apple Color Emoji') {
         verdict.className = 'verdict yes';
         verdict.textContent =
-          '\u2705 Apple Color Emoji is installed and first in the stack. The emoji below are the genuine Apple set \u2014 exactly what SCROLL renders on this device.';
+          '\u2705 Apple Color Emoji is installed and first in the stack. The emoji below are the genuine Apple set \u2014 exactly what SCROLLR renders on this device.';
       } else {
         verdict.className = 'verdict no';
         verdict.textContent =

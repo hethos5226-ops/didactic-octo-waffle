@@ -133,7 +133,7 @@ export interface DirectoryPerson {
    * numbers from a hash of the person's id: a feed score of `62 + hash % 34`,
    * a level, a friend count, a reaction count. They rendered exactly like
    * measurements. With a database connected they were being attributed to real
-   * people, which is the thing SCROLL most needs not to do.
+   * people, which is the thing SCROLLR most needs not to do.
    */
   xp: number | null;
   tallies: Tallies | null;

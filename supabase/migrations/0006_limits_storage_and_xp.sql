@@ -1,4 +1,4 @@
--- SCROLL — column limits, storage lock-down, and the rest of the XP path
+-- SCROLLR — column limits, storage lock-down, and the rest of the XP path
 --
 -- The last three findings from the pre-pause audit, each demonstrated by
 -- executing it against a real PostgreSQL first.

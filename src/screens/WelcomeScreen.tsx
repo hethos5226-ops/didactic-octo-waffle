@@ -61,7 +61,7 @@ export function WelcomeScreen() {
             <span key={e} style={{ animationDelay: `${i * 0.18}s` }}>{e}</span>
           ))}
         </div>
-        <h1 className="welcome__wordmark">SCROLL</h1>
+        <h1 className="welcome__wordmark">SCROLLR</h1>
         <p className="welcome__tagline">
           Meet someone. Watch their FYP.<br />Laugh together. Rate their feed.
         </p>
@@ -151,8 +151,8 @@ const TERMS = [
 ];
 
 const PRIVACY = [
-  'SCROLL collects the least it can. There is no behavioural tracking, no advertising profile, no analytics product, no contact upload and no location collection.',
-  'When SCROLL is connected to its database, your account holds your email address so you can sign in, your handle and profile, who you are friends with, who you follow, your notifications and a summary of matches you have played. Nothing about what you watch is kept.',
+  'SCROLLR collects the least it can. There is no behavioural tracking, no advertising profile, no analytics product, no contact upload and no location collection.',
+  'When SCROLLR is connected to its database, your account holds your email address so you can sign in, your handle and profile, who you are friends with, who you follow, your notifications and a summary of matches you have played. Nothing about what you watch is kept.',
   'Your profile photo is cropped and shrunk on your device before it is uploaded, so the original never leaves your phone.',
   'You can delete your account from Settings at any time, which removes your profile, photo, friends, follows, notifications and match history.',
   'Sign in with Apple and Google are not connected yet, so no data is shared with either.',

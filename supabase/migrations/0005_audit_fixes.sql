@@ -1,4 +1,4 @@
--- SCROLL — fixes from the pre-pause security, privacy and cost audit
+-- SCROLLR — fixes from the pre-pause security, privacy and cost audit
 --
 -- Every item here was found by executing an attack against a real PostgreSQL,
 -- not by reading the SQL. The probes are preserved as tests in
@@ -9,7 +9,7 @@
 --   * Authorisation gaps in functions that were written for the happy path and
 --     never asked "what if the caller is not who I imagined?"
 --   * Fabricated activity: places where a client could invent an event that
---     never happened, which is the thing SCROLL most needs not to do.
+--     never happened, which is the thing SCROLLR most needs not to do.
 --   * Unbounded growth: writes with no ceiling. On a free tier the cost of an
 --     unbounded write path is the whole database.
 
@@ -200,7 +200,7 @@ end $$;
 --
 -- `lobby_rounds` accepted any `scroller_user_id`. A host could therefore
 -- manufacture a round — and a feed score — against a stranger's name. That is
--- fabricated activity attached to a real person, which is exactly what SCROLL
+-- fabricated activity attached to a real person, which is exactly what SCROLLR
 -- must never produce.
 -- ─────────────────────────────────────────────────────────────────────────
 create or replace function public.validate_round_scroller()

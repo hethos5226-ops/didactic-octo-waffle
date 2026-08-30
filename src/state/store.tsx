@@ -103,7 +103,7 @@ export function newProfile(input: {
     friends: [],
     // A new account starts with an empty inbox, and that is what it shows.
     // There used to be two invented friend requests here so the bell had
-    // something in it — which meant SCROLL greeted every new person by
+    // something in it — which meant SCROLLR greeted every new person by
     // claiming two strangers had asked to be their friend. An empty inbox is
     // honest, and the first real request will mean something.
     incomingRequests: [],

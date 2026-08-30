@@ -1,4 +1,4 @@
-# SCROLL — future features
+# SCROLLR — future features
 
 What is prepared but switched off, what is documented but unbuilt, and what
 each thing actually requires.
@@ -26,13 +26,13 @@ The honest headline, because it changes the original plan:
 > feed.** Not Instagram, not TikTok, not YouTube. Not on any tier, not to
 > partners, not for money.
 
-The "sign in with Instagram and SCROLL mirrors your Reels feed" idea is not
+The "sign in with Instagram and SCROLLR mirrors your Reels feed" idea is not
 available from anyone on any terms. It is not a matter of approval or budget;
 the product does not exist. The only way to obtain such a feed would be
 automating the app or scraping, which breaches terms, risks the user's account,
-and exposes SCROLL legally.
+and exposes SCROLLR legally.
 
-This is why `src/video/` exists in the shape it does. SCROLL is designed around
+This is why `src/video/` exists in the shape it does. SCROLLR is designed around
 *a* video source, not around any particular platform.
 
 ### Instagram — link-only
@@ -50,7 +50,7 @@ This is why `src/video/` exists in the shape it does. SCROLL is designed around
 - **Available:** an embed SDK for individual public videos. The Display API
   returns a user's **own posted videos** after they authorise it.
 - **Not available:** the For You feed. What someone *posts* is a different thing
-  from what they *watch*, and SCROLL is about the latter.
+  from what they *watch*, and SCROLLR is about the latter.
 - **To go further:** TikTok for Developers registration and app review.
 
 ### YouTube — the realistic one
@@ -61,7 +61,7 @@ This is why `src/video/` exists in the shape it does. SCROLL is designed around
 - **Not available:** a personal recommendation feed.
 - **Why it is the first real integration worth building:** it is the only
   mainstream platform where embedding is unambiguously sanctioned, the adapter
-  is straightforward, and **the bandwidth is YouTube's** — SCROLL pays nothing
+  is straightforward, and **the bandwidth is YouTube's** — SCROLLR pays nothing
   to serve the video.
 - **Watch for:** ads inside the embed, playback restrictions some videos set,
   and autoplay rules on mobile browsers.
@@ -70,7 +70,7 @@ This is why `src/video/` exists in the shape it does. SCROLL is designed around
 
 Given that no feed API exists, the plausible designs are:
 
-1. **Curated catalogue.** SCROLL maintains `video_refs` of embeddable content.
+1. **Curated catalogue.** SCROLLR maintains `video_refs` of embeddable content.
    Full control, no platform dependency, but someone has to curate.
 2. **Host picks.** The host searches (YouTube Data API) and queues videos for
    the room. Closest to the original spirit — one person shows the others
@@ -97,7 +97,7 @@ lobbies, bots that cannot be counted as people.
 
 **Not built:** shared game state and synchronised playback. The transport is
 Supabase Realtime — usage-priced with a free allowance, so it costs nothing
-while SCROLL is small, unlike a game server which costs the same at 3 players
+while SCROLLR is small, unlike a game server which costs the same at 3 players
 as at 3,000.
 
 **Design notes for later:**
@@ -157,7 +157,7 @@ placements directly; keep frequency caps on-device; report impressions and
 clicks per creative in aggregate; never pass a user identifier; label every ad.
 
 **Do not:** add an ad SDK that requires a stable user id or device advertising
-identifier. That is the moment SCROLL becomes a surveillance product, and it is
+identifier. That is the moment SCROLLR becomes a surveillance product, and it is
 very hard to reverse once revenue depends on it.
 
 ---
@@ -175,12 +175,12 @@ The idea: a host records their own reaction while watching, and can keep it.
 - Recording happens **locally on the device**. `MediaRecorder` can do this in a
   browser; the camera-roll save cannot, which is why this needs a native app.
 - Saved to the camera roll **only when the user chooses**.
-- **Never uploaded automatically.** SCROLL keeps no copy unless the user
+- **Never uploaded automatically.** SCROLLR keeps no copy unless the user
   explicitly uploads one.
 - Camera and microphone only after an OS permission prompt the user granted.
   `NSCameraUsageDescription` / `NSMicrophoneUsageDescription` must explain why,
   or App Review rejects.
-- SCROLL never reads the camera roll — writing one file is not reading the
+- SCROLLR never reads the camera roll — writing one file is not reading the
   library.
 
 **Consent is the hard part, not the technology.** If other people are audible
@@ -190,7 +190,7 @@ parties to consent. **This needs advice before it ships.** The safest first
 version records only the host's own camera and microphone, with everyone in
 the session told that the host is recording.
 
-**If uploading is ever added,** it changes SCROLL's cost and legal position
+**If uploading is ever added,** it changes SCROLLR's cost and legal position
 completely — see [SCALING.md](SCALING.md) on video, and the CSAM obligations in
 [LEGAL_READINESS.md](LEGAL_READINESS.md). Recording locally does not create
 those obligations. Hosting does.
@@ -201,11 +201,11 @@ those obligations. Hosting does.
 
 **Documented. External. Needs legal review.**
 
-The idea: a user whose SCROLL reaction video does well on social media receives
+The idea: a user whose SCROLLR reaction video does well on social media receives
 temporary Premium.
 
 **The privacy-preserving shape:** the user submits a link to their own post;
-SCROLL reads the **public** view count; if it passes a threshold, an Edge
+SCROLLR reads the **public** view count; if it passes a threshold, an Edge
 Function grants a time-limited entitlement — which the existing `entitlements`
 table already supports via `source = 'promo'` and `expires_at`.
 
@@ -227,11 +227,11 @@ Sensible first version: manual, small, and explicitly a promotion with terms.
 **Documented.**
 
 Settings → Connected accounts, for Instagram, Google, Apple. Optional,
-revocable, and **never required to use SCROLL** — the email account stays the
+revocable, and **never required to use SCROLLR** — the email account stays the
 main identity.
 
 Worth being clear about what connecting would achieve: **not a feed**. Realistic
-value is profile enrichment or finding friends who also use SCROLL. Worth
+value is profile enrichment or finding friends who also use SCROLLR. Worth
 building only when there is a concrete reason.
 
 ---
@@ -273,11 +273,11 @@ of premature. What matters is that the data is stored in the right shape now.
 
 ## Explicitly not planned
 
-Not because they are hard, but because they are not what SCROLL is:
+Not because they are hard, but because they are not what SCROLLR is:
 
 - Video creation, editing, filters, effects.
 - Video upload and hosting.
-- A solo browsing feed. SCROLL is watching *together*.
+- A solo browsing feed. SCROLLR is watching *together*.
 - Reels, or any feed-mirroring of a third-party platform.
 - Behavioural advertising.
 - Selling data.

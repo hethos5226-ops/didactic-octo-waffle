@@ -18,7 +18,7 @@ export function HomeScreen() {
   const progress = progressionFromXp(profile.xp);
   const title = titleForLevel(progress.level);
   const score = feedScoreFrom(percentages(profile.tallies));
-  // Real people with SCROLL open, or null while that is unknown. Never a
+  // Real people with SCROLLR open, or null while that is unknown. Never a
   // decorative number: an invented count is a lie told to the first person
   // who believes it, and zero is a perfectly honest thing to show.
   const online = useOnlineCount(profile.id);
@@ -26,7 +26,7 @@ export function HomeScreen() {
   return (
     <div className="screen home">
       <header className="home__head">
-        <h1 className="wordmark">SCROLL</h1>
+        <h1 className="wordmark">SCROLLR</h1>
         <div className="row home__head-actions">
 
         <button

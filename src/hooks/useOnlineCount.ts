@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { isBackendConfigured, watchOnlineCount } from '../backend';
 
 /**
- * The number of real people with SCROLL open, or null when that is not known.
+ * The number of real people with SCROLLR open, or null when that is not known.
  *
  * Null is the important half. Without it the only options are a fabricated
  * number or a confident zero, and a confident zero shown while the count is

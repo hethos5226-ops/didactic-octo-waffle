@@ -1,4 +1,4 @@
--- SCROLL — initial schema
+-- SCROLLR — initial schema
 --
 -- Run this once against a new Supabase project (SQL Editor, or `supabase db
 -- push`). It creates the tables the app reads and writes, and the row-level

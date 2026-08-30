@@ -1,6 +1,6 @@
-# SCROLL — privacy
+# SCROLLR — privacy
 
-What SCROLL stores, why each thing is needed, and what it deliberately does not
+What SCROLLR stores, why each thing is needed, and what it deliberately does not
 collect.
 
 This is an engineering document describing what the code actually does. It is
@@ -13,7 +13,7 @@ cannot be subpoenaed, cannot be sold by a future owner, and cannot be stolen.
 
 ---
 
-## What SCROLL does not collect
+## What SCROLLR does not collect
 
 None of the following exists anywhere in the codebase. This is not a roadmap
 item; it is a boundary.
@@ -27,10 +27,10 @@ item; it is a boundary.
 - **Contact upload or phone-contact syncing.**
 - **Precise location.** No geolocation API call. `country` is a value you pick
   from a list on your profile.
-- **Browsing history**, of SCROLL or anything else.
+- **Browsing history**, of SCROLLR or anything else.
 - **Device fingerprinting.** No device identifiers, advertising IDs, or
   fingerprinting.
-- **Camera-roll contents.** SCROLL never enumerates or reads your photo
+- **Camera-roll contents.** SCROLLR never enumerates or reads your photo
   library. Choosing a profile photo goes through the OS file picker, which
   hands over exactly one file you selected.
 - **Automatic uploads.** Nothing is uploaded without you doing something that
@@ -53,14 +53,14 @@ is never malice, it is a font tag.
 
 ---
 
-## What SCROLL stores, and why
+## What SCROLLR stores, and why
 
 ### Identity — Supabase Auth
 
 | Data | Why |
 |---|---|
 | Email address | The credential you sign in with, and the route for password reset |
-| Password (hashed) | Never stored or seen by SCROLL; Supabase Auth handles it |
+| Password (hashed) | Never stored or seen by SCROLLR; Supabase Auth handles it |
 | Session token | Kept in browser storage so you stay signed in |
 
 Google and Apple sign-in are wired but not configured. When enabled, the
@@ -71,7 +71,7 @@ list, no friends graph, no posts.
 
 Handle, display name, bio, avatar emoji, colour, country, flag, vibes,
 hashtags. All of it is self-description you typed or chose, and all of it is
-publicly readable: SCROLL is a directory you have to be findable in to be
+publicly readable: SCROLLR is a directory you have to be findable in to be
 matched with anyone.
 
 `photo_url` points at one image in the `avatars` bucket. **The photo is cropped
@@ -104,7 +104,7 @@ an event that never happened and repeat it without limit.
 Only what is actually stored about them. Until the final audit pass, viewing
 another person's profile displayed a Feed Score, level, friend count and
 reaction total derived from a hash of their user id — invented figures
-attributed to real accounts. Where a number is not known, SCROLL now shows an
+attributed to real accounts. Where a number is not known, SCROLLR now shows an
 em dash.
 
 ### Play history — `matches`, `lobby_rounds`
@@ -115,7 +115,7 @@ by you.
 **Reactions are stored as counts, not as events.** `lobby_rounds.reaction_counts`
 holds `{"😂": 4, "💀": 2}` for a round — no author, no timestamp. Storing who
 reacted to what and when would build precisely the behavioural record this
-document says SCROLL does not keep, and the game needs none of it: the results
+document says SCROLLR does not keep, and the game needs none of it: the results
 screen shows totals.
 
 ### Presence — nothing stored
@@ -128,8 +128,8 @@ would turn a headcount into a "who is online right now" list nobody asked for.
 ### Entitlements — `entitlements`
 
 Subscription tier, status, expiry, and which store it came from. Readable only
-by you, writable by no browser role. No payment details ever reach SCROLL: when
-subscriptions are real, Apple and Google process payment and SCROLL sees only
+by you, writable by no browser role. No payment details ever reach SCROLLR: when
+subscriptions are real, Apple and Google process payment and SCROLLR sees only
 whether you are entitled.
 
 ### Moderation — `reports`
@@ -214,22 +214,22 @@ because a bot is not a client — nothing runs on its behalf.
 **Reaction recording** (not implemented). If built: explicit opt-in per
 session, a visible recording indicator, capture local to the device, saved to
 the camera roll only when the user chooses, and **never uploaded automatically**.
-SCROLL keeps no copy unless the user explicitly uploads one. Camera and
+SCROLLR keeps no copy unless the user explicitly uploads one. Camera and
 microphone only after an OS permission prompt the user granted.
 
 **Connected accounts** (not implemented). Optional, revocable, and never
-required to use SCROLL. Read-only scopes, storing only the tokens needed and
+required to use SCROLLR. Read-only scopes, storing only the tokens needed and
 nothing about what you watched there.
 
 **Creator rewards** (not implemented). Would need view counts from a platform.
-The privacy-preserving shape is the user submitting a link and SCROLL reading a
-public count — not SCROLL monitoring their account.
+The privacy-preserving shape is the user submitting a link and SCROLLR reading a
+public count — not SCROLLR monitoring their account.
 
 ---
 
 ## Australian context
 
-SCROLL is being built in Australia. The Privacy Act 1988 and the Australian
+SCROLLR is being built in Australia. The Privacy Act 1988 and the Australian
 Privacy Principles are the relevant framework. Small businesses under $3m
 turnover are currently often exempt, but that exemption is under active reform
 and should not be relied on. Building to the APPs now costs little; retrofitting

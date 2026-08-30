@@ -1,9 +1,9 @@
-# SCROLL — Australian legal and regulatory position
+# SCROLLR — Australian legal and regulatory position
 
 **This is not legal advice.** It is engineering research, compiled to make the
 open questions visible before development pauses. Where something is a
 confirmed statutory requirement it is cited. Where it turns on judgement about
-what SCROLL actually is, it is flagged as a question for a lawyer — and the
+what SCROLLR actually is, it is flagged as a question for a lawyer — and the
 most important question on this page is one of those.
 
 Compiled 30 August 2026. Regulation in this area is moving quickly; verify
@@ -19,11 +19,11 @@ against the primary sources before relying on any of it.
 
 ## 1. The question that matters most
 
-**Is SCROLL an "age-restricted social media platform"?**
+**Is SCROLLR an "age-restricted social media platform"?**
 
 If it is, and it launches publicly, it must take reasonable steps to stop
 anyone under 16 holding an account — and the audience most likely to want
-SCROLL is the audience the law is about.
+SCROLLR is the audience the law is about.
 
 ### What is confirmed
 
@@ -59,9 +59,9 @@ The platforms named as age-restricted from 10 December 2025 are Facebook,
 Instagram, Kick, Reddit, Snapchat, Threads, TikTok, Twitch, X and YouTube.
 ([eSafety — Which platforms are age-restricted](https://www.esafety.gov.au/about-us/industry-regulation/social-media-age-restrictions/which-platforms-are-age-restricted))
 
-### Why SCROLL is genuinely ambiguous
+### Why SCROLLR is genuinely ambiguous
 
-SCROLL has an argument on both sides, which is precisely why this needs advice
+SCROLLR has an argument on both sides, which is precisely why this needs advice
 rather than a decision by its developer.
 
 **Points toward being caught:**
@@ -71,7 +71,7 @@ rather than a decision by its developer.
 - Profiles, bios, handles and in-lobby chat are user-posted material — limb 3
   is met.
 - Matching strangers to interact socially is arguably the significant purpose.
-  SCROLL's own tagline is "meet someone".
+  SCROLLR's own tagline is "meet someone".
 
 **Points toward the gaming exclusion:**
 
@@ -87,9 +87,9 @@ gaming exclusion is being read narrowly and game-like social services are under
 active scrutiny.
 ([Clayton Utz, May 2026](https://www.claytonutz.com/insights/2026/may/social-media-minimum-age-restrictions-the-net-widens-enforcement-begins-and-gaming-platforms-in-the-frame))
 
-> **Lawyer question 1 — the highest-stakes item in this repository.** Is SCROLL,
+> **Lawyer question 1 — the highest-stakes item in this repository.** Is SCROLLR,
 > as built, an age-restricted social media platform? The answer changes the
-> product: compliance requires age assurance infrastructure that SCROLL has
+> product: compliance requires age assurance infrastructure that SCROLLR has
 > none of, and the realistic alternative is a 16+ minimum with real enforcement.
 
 ### If it is caught, what "reasonable steps" means
@@ -147,25 +147,25 @@ third-party age-assurance provider that returns a yes/no, and store the
   ([OAIC — Children's Online Privacy Code](https://www.oaic.gov.au/privacy/privacy-registers/privacy-codes/childrens-online-privacy-code) ·
   [Bird & Bird analysis](https://www.twobirds.com/en/insights/2026/australia/designed-for-kids-regulated-for-all))
 
-### What this means for SCROLL
+### What this means for SCROLLR
 
-SCROLL is very likely under the turnover threshold today, so the APPs may not
+SCROLLR is very likely under the turnover threshold today, so the APPs may not
 bind it *yet*. Relying on that would be a mistake for three reasons: the
 exemption is under active reform; the privacy tort applies regardless; and the
 minimum-age guidance ties "reasonable steps" to meeting privacy obligations
 anyway.
 
-Building to the APPs now is cheap. SCROLL already collects very little, stores
+Building to the APPs now is cheap. SCROLLR already collects very little, stores
 reactions as counts rather than events, keeps no viewing history, processes
 photos on-device, and offers working account deletion.
 
 **One APP 8 item needs an answer before launch:** Supabase hosts data in a
-region chosen at project creation. If SCROLL's project is not in Australia,
+region chosen at project creation. If SCROLLR's project is not in Australia,
 that is an overseas disclosure and must be disclosed in the privacy policy.
 **Confirm the region in the Supabase dashboard.** This is a five-minute check
 and a required disclosure.
 
-> **Lawyer question 3.** Is SCROLL an APP entity now? Should it act as one
+> **Lawyer question 3.** Is SCROLLR an APP entity now? Should it act as one
 > regardless? And does the Children's Online Privacy Code apply once registered?
 
 ---
@@ -179,7 +179,7 @@ scheme includes Basic Online Safety Expectations and industry codes, with
 powers to require information and issue removal notices.
 ([eSafety — Regulatory guidance](https://www.esafety.gov.au/industry/regulatory-guidance))
 
-### What SCROLL already has
+### What SCROLLR already has
 
 Reporting (nine reasons, subject-scoped, immutable status), blocking that is
 private to the blocker and enforced by database policy in both directions,
@@ -199,9 +199,9 @@ of it matters before strangers are matched with each other.
 
 ## 4. Advertising
 
-Nothing is active. If SCROLL ever advertises, the confirmed constraints are the
+Nothing is active. If SCROLLR ever advertises, the confirmed constraints are the
 Australian Consumer Law's prohibitions on misleading conduct, the AANA codes,
-and materially stricter rules for advertising to children. SCROLL's ad boundary
+and materially stricter rules for advertising to children. SCROLLR's ad boundary
 carries no user identifier at all, which avoids most consent questions by
 construction.
 
@@ -214,58 +214,77 @@ construction.
 Nothing is active. Confirmed constraints when it is: consumer guarantees under
 the ACL cannot be excluded; automatic renewal must be clearly disclosed; and
 both app stores require their own billing for digital subscriptions, taking
-15–30%. SCROLL's entitlement architecture already assumes store billing.
+15–30%. SCROLLR's entitlement architecture already assumes store billing.
 
 ---
 
-## 6. The name "SCROLL" — trademark risk
+## 6. The name "SCROLLR" — trademark risk
 
-**I could not confirm the status of any Australian trade mark for "SCROLL", and
-this document does not claim one way or the other.** What follows is the
+**I could not confirm the status of any Australian trade mark for "SCROLLR",
+and this document does not claim one way or the other.** What follows is the
 framework and what must actually be searched.
 
-### Why the risk is real
+### The rename materially improved this
 
-"Scroll" is an ordinary English word, and in a social-media context it is close
-to descriptive of what users do. Australian examiners assess whether other
-traders would legitimately want to use the sign; a mark that is descriptive or
-lacking inherent adaptation to distinguish faces objection under s 41 of the
-*Trade Marks Act 1995*, and may need evidence of acquired distinctiveness —
-which a pre-launch app cannot have.
-([IP Australia — searching existing trade marks](https://www.ipaustralia.gov.au/trade-marks/search-existing-trade-marks))
+The project was called **SCROLL** until 30 August 2026. That was a genuinely
+weak name to try to protect: "scroll" is an ordinary English word and, in a
+social-media context, close to descriptive of the very thing users do. A mark
+that is descriptive or otherwise lacking inherent adaptation to distinguish
+faces objection under **s 41 of the *Trade Marks Act 1995***, and overcoming
+that needs evidence of acquired distinctiveness, which a pre-launch app cannot
+have.
 
-Two distinct risks, often confused:
+**SCROLLR is a coined word.** It is not in the dictionary, no other trader needs
+it to describe their own goods, and that is precisely the test an Australian
+examiner applies. Invented terms sit at the strong end of the distinctiveness
+spectrum. This does not guarantee registration — the search below is still
+required — but it moves the name from *probably unregistrable* to *the kind of
+mark the system is designed to protect*.
 
-1. **You cannot register it** — likely, on descriptiveness grounds alone, for a
-   plain word mark in the relevant classes.
-2. **Someone else already has it** — which could force a rename after launch.
+Note the flip side: dropping a vowel is a common naming device (Flickr, Tumblr,
+Grindr), so **near-identical marks are the thing to look for**, not just exact
+ones. An examiner assesses deceptive similarity, not identity, so "Scroller",
+"Skrollr" or "Scroll" in the same classes could all be obstacles.
 
-The second is far more damaging, and it is cheap to check now.
+### Two distinct risks, often confused
+
+1. **You cannot register it** — materially less likely now than under the old
+   name, but still to be confirmed.
+2. **Someone else already has it, or something close** — which could force a
+   rename after launch. This is the more damaging of the two and the cheaper to
+   check.
 
 ### What to search, before launch
 
 Use [Australian Trade Mark Search](https://www.ipaustralia.gov.au/trade-marks/search-existing-trade-marks)
-(free) for "SCROLL" and near-identical marks in:
+(free) for **SCROLLR** *and* near-identical marks — SCROLL, SCROLLER, SKROLLR —
+in:
 
 - **Class 9** — software and mobile applications
 - **Class 38** — telecommunications and streaming
 - **Class 41** — entertainment services
 - **Class 42** — SaaS and platform services
 
-Also check: business name availability (ASIC Connect), `scroll.com.au` and
-`.app` domain availability, and app-store name collisions, since Apple and
-Google both refuse duplicate names regardless of trade mark status.
+Also check, all free and all worth doing in one sitting:
+
+- Business name availability (ASIC Connect).
+- Domains: `scrollr.app`, `scrollr.com.au`, `scrollr.com`. The app currently
+  shows `scrollr.app/j/<code>` on the invite screen as a placeholder, so that
+  one is worth securing or changing.
+- App-store name collisions. Apple and Google both refuse duplicate app names
+  regardless of trade mark status.
 
 ### Practical mitigation
 
-A composite or stylised mark, or a distinctive pairing ("SCROLL Together", a
-logo lockup), is far more registrable than the bare word, and gives protection
-the plain word would not. Deciding this **before** any marketing spend or
-account creation is much cheaper than after.
+A composite or stylised mark — the wordmark as it is drawn in the app, or a
+logo lockup — is registrable alongside the plain word and gives protection the
+word alone may not. Deciding this **before** any marketing spend, social
+account or domain purchase is far cheaper than after.
 
-> **Lawyer question 6.** Is "SCROLL" registrable in the relevant classes, is it
-> already taken, and is a rename advisable before launch? A trade mark attorney
-> answers this in one consultation, and it is the cheapest question on this page.
+> **Lawyer question 6.** Is "SCROLLR" registrable in the relevant classes, is
+> anything deceptively similar already registered, and should the application
+> be for the word, the logo, or both? A trade mark attorney answers this in one
+> consultation, and it remains the cheapest question on this page.
 
 ---
 

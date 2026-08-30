@@ -1,14 +1,14 @@
--- SCROLL — video references, moderation, and account deletion
+-- SCROLLR — video references, moderation, and account deletion
 --
--- Three unrelated-looking things, joined by one idea: SCROLL should hold as
+-- Three unrelated-looking things, joined by one idea: SCROLLR should hold as
 -- little as it can get away with, and should be able to let go of it.
 
 -- ─────────────────────────────────────────────────────────────────────────
 -- video sources
 --
--- SCROLL is not a video host and this schema is built so it never has to
+-- SCROLLR is not a video host and this schema is built so it never has to
 -- become one. A video is a *reference* — where it lives, who published it,
--- what SCROLL is permitted to do with it — and the session system never asks
+-- what SCROLLR is permitted to do with it — and the session system never asks
 -- which provider it came from. That is the whole point of the indirection: an
 -- Instagram or TikTok integration, if one ever becomes legitimately possible,
 -- is a new row in `video_sources` and a new adapter on the client, not a
@@ -23,7 +23,7 @@ create table if not exists public.video_sources (
   -- Disabled sources stay in the schema so their references remain readable
   -- and attributable, while nothing new can be added against them.
   enabled     boolean not null default false,
-  -- What SCROLL may do with content from here. The session system reads this
+  -- What SCROLLR may do with content from here. The session system reads this
   -- to decide whether it can embed a player or must link out.
   rights      text not null default 'link_only'
                 check (rights in ('owned', 'embed_permitted', 'link_only')),
@@ -36,7 +36,7 @@ alter table public.video_sources enable row level security;
 drop policy if exists "sources are readable" on public.video_sources;
 create policy "sources are readable" on public.video_sources for select using (true);
 
--- The registry ships with the providers SCROLL knows how to talk about. Only
+-- The registry ships with the providers SCROLLR knows how to talk about. Only
 -- `sample` is enabled: it is the built-in demo content the prototype already
 -- plays. The rest are declared so the shape is real and the work later is
 -- configuration rather than migration — every one of them is switched off
@@ -44,8 +44,8 @@ create policy "sources are readable" on public.video_sources for select using (t
 insert into public.video_sources (id, name, enabled, rights, notes) values
   ('sample',    'Built-in sample content', true,  'owned',
    'The demo clips bundled with the prototype. No third party involved.'),
-  ('scroll',    'SCROLL-hosted',           false, 'owned',
-   'Reserved for content SCROLL would host itself. Not built: hosting video means storage and egress costs — see SCALING.md.'),
+  ('scroll',    'SCROLLR-hosted',           false, 'owned',
+   'Reserved for content SCROLLR would host itself. Not built: hosting video means storage and egress costs — see SCALING.md.'),
   ('youtube',   'YouTube',                 false, 'embed_permitted',
    'The only mainstream platform with a documented, terms-compliant embed player. Most realistic first integration.'),
   ('instagram', 'Instagram',               false, 'link_only',
@@ -75,7 +75,7 @@ alter table public.video_refs enable row level security;
 drop policy if exists "video references are readable" on public.video_refs;
 create policy "video references are readable" on public.video_refs for select using (true);
 -- No insert policy: the catalogue is curated by the service role. Letting any
--- client add references would make SCROLL a link-sharing surface, with the
+-- client add references would make SCROLLR a link-sharing surface, with the
 -- moderation burden that implies, before there is anything to moderate it
 -- with.
 
@@ -83,7 +83,7 @@ create policy "video references are readable" on public.video_refs for select us
 -- what happened in a round
 --
 -- Deliberately aggregate. Storing which person sent which reaction at which
--- second would build exactly the behavioural record PRIVACY.md promises SCROLL
+-- second would build exactly the behavioural record PRIVACY.md promises SCROLLR
 -- does not keep, and the game needs none of it: a round needs its totals, and
 -- the totals are what the results screen shows.
 -- ─────────────────────────────────────────────────────────────────────────

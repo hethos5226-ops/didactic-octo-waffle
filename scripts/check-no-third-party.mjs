@@ -2,7 +2,7 @@
 /**
  * Fails the build if the site would contact anyone but its own backend.
  *
- * SCROLL's privacy policy tells people there is no third-party tracking, no
+ * SCROLLR's privacy policy tells people there is no third-party tracking, no
  * analytics and no external script. That promise is only worth anything if
  * something checks it, because the way it gets broken is not malice — it is a
  * font tag, an icon CDN, an embed snippet, each of which looks harmless and
@@ -50,7 +50,7 @@ const TEXT_ONLY = [
   /^https:\/\/supabase\.com$/i,
   /^https:\/\/github\.com$/i,
   /^https:\/\/react\.dev$/i,
-  /^https:\/\/scroll\.app$/i,
+  /^https:\/\/scrollr\.app$/i,
 ];
 
 const isAllowed = (h) => ALLOWED.some((r) => r.test(h)) || TEXT_ONLY.some((r) => r.test(h));
@@ -93,7 +93,7 @@ if (offenders.size) {
   }
   console.error('');
   console.error('Every host here receives the IP address and User-Agent of');
-  console.error('anyone who opens SCROLL. PRIVACY.md promises that does not');
+  console.error('anyone who opens SCROLLR. PRIVACY.md promises that does not');
   console.error('happen, so either self-host the resource or, if the reference');
   console.error('is genuinely safe, add it to the allowlist in this file with');
   console.error('a comment saying why.');

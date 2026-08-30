@@ -1,8 +1,8 @@
-# SCROLL — scaling and cost
+# SCROLLR — scaling and cost
 
 What breaks first, what costs money first, and roughly when.
 
-Written for a specific situation: SCROLL currently costs **$0/month** and
+Written for a specific situation: SCROLLR currently costs **$0/month** and
 should keep costing nothing while it is small. The goal is not to support
 100,000 users today. It is to know what would become expensive, and to avoid
 decisions that make growth impossible later.
@@ -36,7 +36,7 @@ a few months away. Opening the dashboard restores it.
 
 ## By scale
 
-### 10 users — where SCROLL is
+### 10 users — where SCROLLR is
 
 Nothing is stressed. A profile row is well under 1 kB, so ten users plus the
 200-bot roster is a fraction of a megabyte.
@@ -63,7 +63,7 @@ The first real thresholds appear.
 - **Database.** Perhaps 50–150 MB with history. Fine.
 - **Storage.** ~1,000 avatars ≈ 50 MB. Fine.
 - **Realtime.** If 5% are online at once that is 50 concurrent — still inside
-  the free 200. If SCROLL gets *popular* rather than merely used, 10–20%
+  the free 200. If SCROLLR gets *popular* rather than merely used, 10–20%
   concurrent puts you at 100–200 and this becomes the first thing to exceed.
 - **Egress.** Profile photos are the traffic. 5 GB/month is a lot of 50 kB
   avatars, but this is where a CDN question first appears.
@@ -113,7 +113,7 @@ advance rather than discovering it.
 - **Auth.** Past Pro's 100,000 MAU.
 
 Cost: **$500–3,000/month**, dominated by Realtime and egress — *if* video is
-still referenced rather than hosted. If SCROLL hosts video by then, see below,
+still referenced rather than hosted. If SCROLLR hosts video by then, see below,
 because that number changes completely.
 
 **Bottlenecks:** Realtime fan-out; database connection limits (needs
@@ -125,14 +125,14 @@ rather than a technical one.
 
 ## Video: the decision that dominates everything
 
-This is the most important cost section and the reason SCROLL's architecture
+This is the most important cost section and the reason SCROLLR's architecture
 refuses to own video.
 
 | Approach | Storage | Bandwidth | Legal exposure | Moderation | Cost at 100k |
 |---|---|---|---|---|---|
 | **Reference only** (store a link, play nothing) | ~0 | ~0 | Minimal | Minimal | ~$0 |
 | **Embed where permitted** (provider's player) | ~0 | ~0 — the provider serves it | Low, if terms permit | Provider's | ~$0 |
-| **SCROLL-hosted** (upload, store, stream) | Grows forever | Per view | High | Yours entirely | **Thousands/month** |
+| **SCROLLR-hosted** (upload, store, stream) | Grows forever | Per view | High | Yours entirely | **Thousands/month** |
 
 The arithmetic that matters: a 15-second short-form video is roughly 3–5 MB.
 Serving one video to one viewer costs about 4 MB of egress. At $0.09/GB, that
@@ -153,7 +153,7 @@ And it is worse than the number suggests:
   a staffing cost.
 
 **Conclusion: reference and embed. Do not host.** This is not a temporary
-constraint to grow out of — it is the correct architecture for what SCROLL is.
+constraint to grow out of — it is the correct architecture for what SCROLLR is.
 The shared experience does not require owning the pixels. `video_sources` has
 `scroll` declared and disabled precisely so this stays a deliberate decision
 rather than a drift.
@@ -166,8 +166,8 @@ What actually costs money, most likely first:
 
 1. **Realtime concurrent connections** — the first thing to exceed a free tier,
    and the dominant cost at every scale after.
-2. **Video bandwidth, if SCROLL ever hosts video** — would dwarf everything
-   else combined. Currently zero because SCROLL hosts nothing.
+2. **Video bandwidth, if SCROLLR ever hosts video** — would dwarf everything
+   else combined. Currently zero because SCROLLR hosts nothing.
 3. **Database egress** — profile photos, then query volume.
 4. **Database size** — slow-growing; match history is the part that grows
    unboundedly and should be capped.
@@ -190,7 +190,7 @@ What actually costs money, most likely first:
 - A managed search service.
 - Kubernetes, or any always-on compute.
 
-Each would add fixed monthly cost for capability SCROLL does not need at its
+Each would add fixed monthly cost for capability SCROLLR does not need at its
 current size.
 
 ---
