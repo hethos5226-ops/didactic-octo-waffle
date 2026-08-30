@@ -876,16 +876,22 @@ begin
   perform tests.check(ok, 'an implausible XP claim is refused outright');
 end $$;
 
--- And it only ever applies to the caller.
+-- And it only ever applies to the caller. Measured as a delta rather than an
+-- absolute: other parts of the suite legitimately award XP too, and a test
+-- that assumes it is the only writer breaks the moment that stops being true.
 do $$
-declare bob_xp integer;
+declare bob_before integer; bob_after integer; alice_before integer; alice_after integer;
 begin
+  select xp into bob_before   from public.profiles where id = '22222222-2222-2222-2222-222222222222';
+  select xp into alice_before from public.profiles where id = '11111111-1111-1111-1111-111111111111';
   perform set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
   set local role authenticated;
   perform public.apply_session_result(100, 1, 1, 1);
   reset role;
-  select xp into bob_xp from public.profiles where id = '22222222-2222-2222-2222-222222222222';
-  perform tests.check(bob_xp = 100, 'the increment lands on the caller, not on anyone else');
+  select xp into bob_after   from public.profiles where id = '22222222-2222-2222-2222-222222222222';
+  select xp into alice_after from public.profiles where id = '11111111-1111-1111-1111-111111111111';
+  perform tests.check(bob_after = bob_before + 100 and alice_after = alice_before,
+    'the increment lands on the caller, not on anyone else');
 end $$;
 
 do $$
@@ -902,3 +908,159 @@ begin
   end;
   perform tests.check(anon_blocked, 'a signed-out caller earns nothing');
 end $$;
+
+do $$ begin raise notice ''; raise notice '── column limits ──'; end $$;
+
+-- A single user wrote a two-megabyte display name through the ordinary profile
+-- save. On a 500 MB free tier that is the database, and the directory is
+-- publicly readable, so one abusive row would be dragged across the wire by
+-- every search.
+
+select tests.check(
+  tests.denied(
+    'update public.profiles set display_name = repeat(''X'', 100000) where id = '
+      || quote_literal(:alice),
+    :alice),
+  'a huge display name is refused');
+
+select tests.check(
+  tests.denied(
+    'update public.profiles set colour = repeat(''c'', 5000) where id = '
+      || quote_literal(:alice),
+    :alice),
+  'a huge colour is refused');
+
+select tests.check(
+  tests.denied(
+    'update public.profiles set hashtags = (select array_agg(''h''||g) '
+      || 'from generate_series(1,5000) g) where id = ' || quote_literal(:alice),
+    :alice),
+  'five thousand hashtags are refused');
+
+-- A count limit alone still allows one enormous element.
+select tests.check(
+  tests.denied(
+    'update public.profiles set hashtags = array[repeat(''h'', 10000)] where id = '
+      || quote_literal(:alice),
+    :alice),
+  'one enormous hashtag is refused');
+
+select tests.check(
+  tests.denied(
+    'update public.profiles set vibes = (select array_agg(''v''||g) '
+      || 'from generate_series(1,500) g) where id = ' || quote_literal(:alice),
+    :alice),
+  'five hundred vibes are refused');
+
+-- Everything the UI can actually produce still saves.
+select tests.check(
+  tests.allowed(
+    'update public.profiles set display_name = ''A perfectly normal name'', '
+      || 'colour = ''#FF2E93'', country = ''Australia'', flag = ''AU'', '
+      || 'vibes = array[''chaos'',''gaming''], '
+      || 'hashtags = array[''memes'',''dogs'',''cooking''] where id = '
+      || quote_literal(:alice),
+    :alice),
+  'an ordinary profile save is unaffected');
+
+do $$ begin raise notice ''; raise notice '── storage: path and object count ──'; end $$;
+
+-- The old policy asked whether the first path segment was your user id.
+-- foldername() splits on '/', so a path that climbs back out still passed.
+select tests.check(
+  tests.denied(
+    'insert into storage.objects (bucket_id, name, owner) values (''avatars'', '
+      || quote_literal('11111111-1111-1111-1111-111111111111/../22222222-2222-2222-2222-222222222222/avatar.jpg')
+      || ', ' || quote_literal(:alice) || ')',
+    :alice),
+  'a path that climbs out of your own folder is refused');
+
+select tests.check(
+  tests.denied(
+    'insert into storage.objects (bucket_id, name, owner) values (''avatars'', '
+      || quote_literal('11111111-1111-1111-1111-111111111111/junk.jpg')
+      || ', ' || quote_literal(:alice) || ')',
+    :alice),
+  'a second file in your own folder is refused');
+
+select tests.check(
+  tests.denied(
+    'insert into storage.objects (bucket_id, name, owner) values (''avatars'', '
+      || quote_literal('22222222-2222-2222-2222-222222222222/avatar.jpg')
+      || ', ' || quote_literal(:alice) || ')',
+    :alice),
+  'another user''s avatar path is still refused');
+
+-- The path the app actually writes must still work, both to create and to
+-- replace — a lock-down that also locks out the legitimate operation is not a
+-- fix, it is an outage.
+select tests.check(
+  tests.allowed(
+    'insert into storage.objects (bucket_id, name, owner) values (''avatars'', '
+      || quote_literal('11111111-1111-1111-1111-111111111111/avatar.jpg')
+      || ', ' || quote_literal(:alice) || ')',
+    :alice),
+  'you can upload your own avatar at the expected path');
+
+select tests.check(
+  tests.allowed(
+    'update storage.objects set owner = ' || quote_literal(:alice)
+      || ' where bucket_id = ''avatars'' and name = '
+      || quote_literal('11111111-1111-1111-1111-111111111111/avatar.jpg'),
+    :alice),
+  'replacing your own avatar still works');
+
+do $$ begin raise notice ''; raise notice '── social XP reaches the server ──'; end $$;
+
+-- XP awarded outside a session used to be granted locally and never persisted,
+-- so a player's level dropped on reload.
+do $$
+declare before_xp integer; after_xp integer;
+begin
+  select xp into before_xp from public.profiles where id = '22222222-2222-2222-2222-222222222222';
+  perform set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
+  set local role authenticated;
+  insert into public.profile_likes (liker_id, liked_id)
+  values ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
+  reset role;
+  select xp into after_xp from public.profiles where id = '22222222-2222-2222-2222-222222222222';
+  perform tests.check(after_xp = before_xp + 25,
+    'receiving a real profile like awards XP server-side');
+end $$;
+
+-- A friendship that is actually accepted awards both sides.
+--
+-- The blocking section earlier put a block between these two, and blocking
+-- correctly prevents a friend request — so it is cleared here rather than
+-- worked around.
+delete from public.blocks;
+
+do $$
+declare a_before integer; b_before integer; a_after integer; b_after integer;
+begin
+  delete from public.friend_requests;
+  select xp into a_before from public.profiles where id = '11111111-1111-1111-1111-111111111111';
+  select xp into b_before from public.profiles where id = '22222222-2222-2222-2222-222222222222';
+
+  perform set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
+  set local role authenticated;
+  insert into public.friend_requests (requester_id, addressee_id)
+  values ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
+  reset role;
+
+  perform set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
+  set local role authenticated;
+  update public.friend_requests set status = 'accepted'
+   where addressee_id = '22222222-2222-2222-2222-222222222222';
+  reset role;
+
+  select xp into a_after from public.profiles where id = '11111111-1111-1111-1111-111111111111';
+  select xp into b_after from public.profiles where id = '22222222-2222-2222-2222-222222222222';
+  perform tests.check(a_after = a_before + 60 and b_after = b_before + 60,
+    'an accepted friendship awards both sides server-side');
+end $$;
+
+-- And the award is still not something a client can ask for directly.
+select tests.check(
+  tests.denied('select public.award_xp(' || quote_literal(:alice) || ', 500)', :alice),
+  'a client cannot call award_xp itself');

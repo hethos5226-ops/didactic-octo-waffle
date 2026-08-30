@@ -160,6 +160,38 @@ the whole message, because publishing handles would turn a headcount into a
 fabricated friend requests handed to every new account; follower counts derived
 from a level (`4_200 + level * 1_137`); a following count of `180 + level * 3`.
 
+And, found in the final pass, an entire fabricated statistics layer on the
+profile screen. Viewing anyone else invented their Feed Score
+(`62 + hash(id) % 34`), their per-category breakdown, their level, their friend
+count, their rounds scrolled and their reactions received — all from a hash of
+their id, all rendering exactly like measurements. Once a database was
+connected these were being shown against **real people's names**. The row the
+directory reads already contained the true values; `rowToDirectoryPerson` was
+simply discarding them. It now carries them, and where a number is genuinely
+unknown the UI shows an em dash and says "no Feed Score yet" rather than
+inventing one. A crown that appeared on any simulated co-viewer above level 25
+went too — nobody in the built-in cast bought a subscription.
+
+### Known gaps, which are product decisions rather than bugs
+
+Two things remain honestly imperfect, and both need a decision rather than a
+guess:
+
+1. **In-session XP does not fully persist.** Session XP does (`0005` wired the
+   sanctioned increment) and so does social XP from real events (`0006` awards
+   it by trigger). What does not is the XP granted for liking or friending a
+   **simulated** co-viewer during a local session — those are not real people,
+   no row is written, and the server never hears. Local XP therefore drifts
+   slightly above the stored value and settles back on reload. Resolving it
+   means deciding whether interacting with a bot should earn real progression;
+   it disappears on its own once sessions are real.
+
+2. **Simulated co-viewers in a session are not labelled as bots.** The
+   database-backed roster carries `is_bot` and is honest everywhere it appears.
+   The local prototype session still renders the built-in cast as ordinary
+   people. Labelling them is a change to the session UI, which this pass was
+   asked not to touch. Worth doing before anyone outside the project plays it.
+
 ---
 
 ## Matchmaking

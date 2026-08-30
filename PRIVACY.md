@@ -99,6 +99,14 @@ acceptance, a like — never asserted by a client. Until the August 2026 audit a
 client could insert any notification it liked, which meant it could fabricate
 an event that never happened and repeat it without limit.
 
+### Statistics shown about other people
+
+Only what is actually stored about them. Until the final audit pass, viewing
+another person's profile displayed a Feed Score, level, friend count and
+reaction total derived from a hash of their user id — invented figures
+attributed to real accounts. Where a number is not known, SCROLL now shows an
+em dash.
+
 ### Play history — `matches`, `lobby_rounds`
 
 A summary per match: who was in it, the round scores, totals, XP. Readable only

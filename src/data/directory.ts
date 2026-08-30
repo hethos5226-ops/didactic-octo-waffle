@@ -41,6 +41,13 @@ export function personToDirectory(p: Person): DirectoryPerson {
     // like a measurement and be entirely made up.
     followerCount: 0,
     premium: false,
+    // The built-in cast are not accounts and have never played a round, so
+    // every play statistic is genuinely unknown rather than zero.
+    xp: null,
+    tallies: null,
+    profileLikes: null,
+    roundsScrolled: null,
+    reactionsReceived: null,
   };
 }
 

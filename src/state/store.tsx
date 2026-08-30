@@ -156,7 +156,9 @@ function memberFromPerson(p: Person, team: 'yours' | 'theirs'): Member {
   return {
     id: p.id, handle: p.handle, avatar: p.avatar, photo: null, colour: p.colour,
     country: p.country, flag: p.flag, level: p.level, feedScore: p.feedScore,
-    vibes: p.vibes, hashtags: p.hashtags, premium: p.level >= 25,
+    // Not Premium. Nobody in the built-in cast bought a subscription, and a
+    // crown derived from a level is a badge that means nothing.
+    vibes: p.vibes, hashtags: p.hashtags, premium: false,
     isMe: false, team, ready: true,
   };
 }

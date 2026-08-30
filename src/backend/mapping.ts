@@ -1,4 +1,4 @@
-import type { Profile } from '../state/types';
+import type { Profile, Tallies } from '../state/types';
 import { emptyTallies } from '../state/scoring';
 import type { VibeId } from '../data/vibes';
 
@@ -125,6 +125,27 @@ export interface DirectoryPerson {
   vibes: VibeId[];
   followerCount: number;
   premium: boolean;
+  /**
+   * Real, stored play statistics — or null when they are genuinely unknown,
+   * which is the case for the built-in local cast.
+   *
+   * These used to be absent, and the profile screen filled the gap by deriving
+   * numbers from a hash of the person's id: a feed score of `62 + hash % 34`,
+   * a level, a friend count, a reaction count. They rendered exactly like
+   * measurements. With a database connected they were being attributed to real
+   * people, which is the thing SCROLL most needs not to do.
+   */
+  xp: number | null;
+  tallies: Tallies | null;
+  profileLikes: number | null;
+  roundsScrolled: number | null;
+  reactionsReceived: number | null;
+}
+
+/** A stored tally set, or null when the row has never recorded a round. */
+function talliesFromRow(raw: ProfileRow['tallies']): Tallies | null {
+  if (!raw || Object.keys(raw).length === 0) return null;
+  return { ...emptyTallies(), ...raw } as Tallies;
 }
 
 export function rowToDirectoryPerson(row: ProfileRow): DirectoryPerson {
@@ -141,5 +162,10 @@ export function rowToDirectoryPerson(row: ProfileRow): DirectoryPerson {
     vibes: (row.vibes ?? []) as VibeId[],
     followerCount: row.follower_count,
     premium: row.premium,
+    xp: row.xp,
+    tallies: talliesFromRow(row.tallies),
+    profileLikes: row.profile_likes,
+    roundsScrolled: row.rounds_scrolled,
+    reactionsReceived: row.reactions_received,
   };
 }
