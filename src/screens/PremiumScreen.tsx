@@ -56,7 +56,7 @@ export function PremiumScreen() {
         <div className="premium__active">
           <span className="premium__active-crown" aria-hidden>👑</span>
           <div>
-            <div className="premium__active-title">SCROLL PREMIUM</div>
+            <div className="premium__active-title">SCROLLR PREMIUM</div>
             <p className="tiny">Active — renews automatically.</p>
           </div>
         </div>
@@ -92,7 +92,7 @@ export function PremiumScreen() {
       <header className="lobby__head">
         <button className="lobby__back" onClick={() => dispatch({ type: 'back' })}>‹</button>
         <div className="grow">
-          <span className="eyebrow">SCROLL PREMIUM</span>
+          <span className="eyebrow">SCROLLR PREMIUM</span>
           <h1 className="title">Lose the ads.<br />Go first.</h1>
         </div>
       </header>

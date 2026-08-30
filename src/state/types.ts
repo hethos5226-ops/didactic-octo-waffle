@@ -77,7 +77,7 @@ export interface AppNotification {
  *
  * Sessions used to be discarded the moment they finished, which meant the
  * thing you just spent ten minutes on left no trace. A match is the unit of
- * play in SCROLL, so it is the thing worth remembering.
+ * play in SCROLLR, so it is the thing worth remembering.
  */
 export interface MatchSummary {
   id: string;

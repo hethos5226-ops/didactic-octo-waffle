@@ -69,11 +69,17 @@ jobs:
       - name: Scan the bundle for privileged keys
         run: node scripts/guard-build-env.mjs --scan-dist
 
+      # Nothing that phones a third party gets deployed. A font tag or an
+      # analytics snippet would hand every visitor's IP to someone they never
+      # chose, which is precisely what the privacy policy says cannot happen.
+      - name: Scan the bundle for third-party hosts
+        run: node scripts/check-no-third-party.mjs
+
       # Downloadable even when Pages is not enabled.
       - name: Upload build for download
         uses: actions/upload-artifact@v4
         with:
-          name: scroll-prototype
+          name: scrollr-prototype
           path: dist
           retention-days: 30
 

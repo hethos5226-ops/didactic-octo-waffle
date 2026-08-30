@@ -1,7 +1,7 @@
 /**
- * What a video is, as far as SCROLL is concerned.
+ * What a video is, as far as SCROLLR is concerned.
  *
- * SCROLL is not a video platform and this abstraction exists to keep it from
+ * SCROLLR is not a video platform and this abstraction exists to keep it from
  * accidentally becoming one. The shared experience — everyone watching the
  * same thing, reacting together, the round ending and the next one starting —
  * is the product. Where the pixels came from is an implementation detail of
@@ -13,7 +13,7 @@
  * post to work, the abstraction has failed and the fix belongs here, not in
  * the screen.
  *
- * That constraint is what makes SCROLL independent of any one platform. An
+ * That constraint is what makes SCROLLR independent of any one platform. An
  * integration that becomes possible is a new adapter; one that disappears —
  * an API closing, terms changing — is a source switched off, with sessions,
  * scores and history unaffected.
@@ -23,14 +23,14 @@
 export type VideoSourceId = 'sample' | 'scroll' | 'youtube' | 'instagram' | 'tiktok';
 
 /**
- * What SCROLL is permitted to do with content from a source.
+ * What SCROLLR is permitted to do with content from a source.
  *
  * This is a legal fact, not a technical one, and it is deliberately part of
  * the type: an adapter cannot be written without stating it, and the player
  * cannot embed something marked `link_only` by accident.
  */
 export type PlaybackRights =
-  /** SCROLL owns or licenses it and may play it directly. */
+  /** SCROLLR owns or licenses it and may play it directly. */
   | 'owned'
   /** The platform publishes an embed player and its terms permit using it. */
   | 'embed_permitted'
@@ -40,7 +40,7 @@ export type PlaybackRights =
 /**
  * A reference to a video. Not the video.
  *
- * SCROLL stores where something lives and how to attribute it, and nothing
+ * SCROLLR stores where something lives and how to attribute it, and nothing
  * else. It does not hold the bytes, and the difference is the whole cost
  * model — see SCALING.md.
  */
@@ -51,7 +51,7 @@ export interface VideoRef {
   externalId: string;
   rights: PlaybackRights;
   title: string;
-  /** Who published it, for attribution. Never a SCROLL user id. */
+  /** Who published it, for attribution. Never a SCROLLR user id. */
   authorHandle: string;
   url: string | null;
   embedUrl: string | null;
@@ -81,7 +81,7 @@ export type Playback =
  * Deliberately small. An adapter turns a reference into something playable and
  * says whether it is usable at all; it does not get to touch session state,
  * scoring or reactions, which is what stops a provider integration from
- * leaking into the parts of SCROLL that matter.
+ * leaking into the parts of SCROLLR that matter.
  */
 export interface VideoSourceAdapter {
   id: VideoSourceId;

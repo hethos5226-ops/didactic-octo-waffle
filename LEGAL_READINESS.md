@@ -1,4 +1,4 @@
-# SCROLL — legal readiness checklist
+# SCROLLR — legal readiness checklist
 
 **This is not legal advice, and nothing here is approval to launch.** It is a
 checklist of what will need addressing, written by an engineer so that the work
@@ -11,7 +11,7 @@ Nothing here has been done. Everything is unchecked on purpose.
 
 ## Status
 
-SCROLL is an unreleased prototype. It is not published to any app store, takes
+SCROLLR is an unreleased prototype. It is not published to any app store, takes
 no payment, and has no users beyond its author. **Most obligations below are
 not yet triggered.** They trigger at public launch, and several must be
 designed for before then because retrofitting is expensive.
@@ -40,28 +40,29 @@ explicitly labelled as such and must be replaced.
 - [ ] **Under-13 (COPPA, US) / under-16 (GDPR, EU).** Both impose heavy
       obligations. Simplest defensible position for a small app: 13+ or 16+
       minimum with an age gate at sign-up.
-- [ ] **Australia's under-16 social media restrictions.** Legislation in this
-      area is live and changing. SCROLL — strangers matched together, live
-      reactions — is plausibly in scope. **Check the current position before
-      launch; this is a lawyer question.**
+- [ ] **Australia's under-16 social media restrictions are now in force**
+      (10 December 2025). Whether SCROLLR is caught turns on the gaming
+      exclusion versus its social features, and it is genuinely ambiguous.
+      Researched with sources in [LEGAL_AUSTRALIA.md](LEGAL_AUSTRALIA.md) —
+      read that first; it is the highest-stakes open question in the project.
 - [ ] **Age rating** for both stores. Strangers + user content + chat pushes
       the rating up regardless of intent.
 
-This is the single most consequential item on the list, because SCROLL matches
+This is the single most consequential item on the list, because SCROLLR matches
 people with strangers and the audience most drawn to it is young.
 
 ---
 
 ## User-generated content and moderation
 
-SCROLL currently hosts no user video. It does host handles, display names, bios
+SCROLLR currently hosts no user video. It does host handles, display names, bios
 and free-text report details, and lobbies have chat.
 
 - [ ] **Notice and takedown** process, with a contact route.
 - [ ] **Moderation review** — `reports` exists; the review side does not.
 - [ ] **Suspension and appeals.** `profiles.status` supports suspension; no
       process exists.
-- [ ] **CSAM obligations.** Non-negotiable and jurisdiction-wide. If SCROLL
+- [ ] **CSAM obligations.** Non-negotiable and jurisdiction-wide. If SCROLLR
       ever accepts image or video upload, scanning and reporting become legal
       requirements — a strong argument for never hosting video.
 - [ ] **Australian Online Safety Act 2021** — eSafety Commissioner's Basic
@@ -101,7 +102,7 @@ enforced by policy in both directions), account and data deletion.
 Required before submission of a native app:
 
 - [ ] **Privacy Policy URL** and **Support URL** — both mandatory.
-- [ ] **Privacy Nutrition Labels** — declare every data type collected. SCROLL's
+- [ ] **Privacy Nutrition Labels** — declare every data type collected. SCROLLR's
       minimal collection makes this genuinely easy, which is a real benefit of
       the position taken in PRIVACY.md.
 - [ ] **Account deletion in-app** — *required* by App Store Review Guideline
@@ -151,7 +152,7 @@ Nothing is active, so nothing is currently owed.
 ## Advertising
 
 - [ ] Ads clearly labelled — implemented as a required `disclosure` field.
-- [ ] No behavioural targeting without consent. SCROLL's ad boundary carries no
+- [ ] No behavioural targeting without consent. SCROLLR's ad boundary carries no
       identifier, which avoids most of this entirely.
 - [ ] **Do not advertise to children** without meeting the far stricter rules.
 - [ ] Australian Association of National Advertisers codes.
@@ -174,12 +175,12 @@ The most legally sensitive area, and the reason the architecture is what it is.
       personal feed.
 - [ ] **TikTok** — embed SDK for public videos. No feed access.
 - [ ] **DMCA / Australian safe harbour** — a designated agent and takedown
-      process if SCROLL ever hosts anything.
-- [ ] **Music licensing.** A significant unresolved risk if SCROLL ever hosts
+      process if SCROLLR ever hosts anything.
+- [ ] **Music licensing.** A significant unresolved risk if SCROLLR ever hosts
       video, since short-form video is mostly music. Embedding leaves this with
       the platform, which is another argument for embedding.
 
-Current position: SCROLL plays only its own generated content, fetches nothing
+Current position: SCROLLR plays only its own generated content, fetches nothing
 from any third party, and hosts nothing.
 
 ---
@@ -187,7 +188,7 @@ from any third party, and hosts nothing.
 ## Third-party sign-in
 
 - [ ] **Google** — OAuth consent screen; verification if sensitive scopes are
-      requested (SCROLL requests none). Branding guidelines apply.
+      requested (SCROLLR requests none). Branding guidelines apply.
 - [ ] **Apple** — paid developer account; Sign in with Apple becomes mandatory
       once Google sign-in ships on iOS.
 - [ ] Disclose in privacy policy what each provider receives.
@@ -210,9 +211,9 @@ from any third party, and hosts nothing.
 
 ## Business
 
-- [ ] Entity — sole trader vs company, if SCROLL takes revenue.
+- [ ] Entity — sole trader vs company, if SCROLLR takes revenue.
 - [ ] ABN, and GST registration above the threshold.
-- [ ] Trade mark search on "SCROLL". A common English word is a **hard** mark to
+- [ ] Trade mark search on "SCROLLR". A common English word is a **hard** mark to
       protect and may already be registered in the relevant class. Worth
       checking early: a rename after launch is far more painful than before.
 - [ ] Domain.

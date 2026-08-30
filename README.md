@@ -1,8 +1,8 @@
-# SCROLL
+# SCROLLR
 
 **Meet someone. Watch their FYP. Laugh together. Rate their feed.**
 
-**SCROLL is a party game you play by watching reels.**
+**SCROLLR is a party game you play by watching reels.**
 
 You get matched with people → one of you is picked as the Scroller → they share
 their feed → everyone watches the same thing at once, reacts live and talks over
@@ -38,12 +38,12 @@ Note that **Pages on a private repo needs a paid plan**; on the free plan the
 repo has to be public first, which puts the prototype on the open internet — so
 that is a deliberate choice, not a step to click through.
 
-**Download the build** — the same workflow always uploads a `scroll-prototype`
+**Download the build** — the same workflow always uploads a `scrollr-prototype`
 artifact under the Actions tab, whether or not Pages is on. Unzip it and serve
 it locally:
 
 ```bash
-npx serve scroll-prototype
+npx serve scrollr-prototype
 ```
 
 (It needs a server — browsers block ES modules opened over `file://`.)
@@ -360,7 +360,7 @@ anyone fills in the form.
 least. A chaotic feed and a cosy feed can both be great; only one category
 actually means "I'd watch this again".
 
-**There is no content library, and no solo feed.** SCROLL has no posts, likes
+**There is no content library, and no solo feed.** SCROLLR has no posts, likes
 or saves of its own: the only feed in the app is the one a Scroller shares
 during a game, and it belongs to them. A viewer for browsing reels alone was
 built and then removed — it made watching alone the main event and pushed the

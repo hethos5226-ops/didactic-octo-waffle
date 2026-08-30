@@ -1,7 +1,7 @@
--- SCROLL — bots and matchmaking
+-- SCROLLR — bots and matchmaking
 --
 -- Two things arrive together here because they are the same problem seen from
--- two sides: a lobby needs people in it, and SCROLL must never lie about how
+-- two sides: a lobby needs people in it, and SCROLLR must never lie about how
 -- many of those people are real.
 --
 -- The rule the whole design turns on: a lobby seat is either a person or a
@@ -368,7 +368,7 @@ end $$;
  *
  * Exists so no screen has to remember to exclude bots. A count that could be
  * got wrong by forgetting a WHERE clause is a count that will eventually be
- * wrong, and this is the number SCROLL must never overstate.
+ * wrong, and this is the number SCROLLR must never overstate.
  */
 create or replace function public.real_member_count(p_lobby uuid)
 returns integer

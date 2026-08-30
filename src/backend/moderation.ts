@@ -3,7 +3,7 @@ import { supabase } from './client';
 /**
  * Reporting, blocking, and deleting your account.
  *
- * Deliberately small. A moderation platform is a large piece of work and SCROLL
+ * Deliberately small. A moderation platform is a large piece of work and SCROLLR
  * has nothing to moderate yet; what it needs now is for these actions to exist
  * in the right shape, so that building the review side later is additive
  * rather than a migration of data stored the wrong way round.

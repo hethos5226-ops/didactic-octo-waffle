@@ -37,7 +37,7 @@ export function CreateLobbyScreen() {
       <div className="invite invite--big">
         <span className="eyebrow">SHARE THIS CODE</span>
         <div className="invite__code">{code}</div>
-        <p className="tiny invite__link">scroll.app/j/{code}</p>
+        <p className="tiny invite__link">scrollr.app/j/{code}</p>
       </div>
 
       {friends.length > 0 ? (

@@ -19,7 +19,7 @@ import { supabase } from './client';
  *
  * Realtime is the transport when synchronised playback lands: it is priced per
  * message and per concurrent connection with a free allowance, so it costs
- * nothing while SCROLL is small and grows with actual use — unlike a game
+ * nothing while SCROLLR is small and grows with actual use — unlike a game
  * server, which costs the same at three players as at three thousand.
  */
 
@@ -158,7 +158,7 @@ export async function lobbySeats(lobbyId: string): Promise<LobbySeat[]> {
  * How many of the seats are people.
  *
  * Computed from the seats rather than from their length, and named so that
- * using the wrong one reads as a mistake. This is the number SCROLL shows.
+ * using the wrong one reads as a mistake. This is the number SCROLLR shows.
  */
 export function realPlayerCount(seats: LobbySeat[]): number {
   return seats.filter((s) => s.userId !== null).length;

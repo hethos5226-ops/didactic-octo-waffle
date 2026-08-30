@@ -42,33 +42,39 @@ export function ProfileScreen() {
   }
 
   const isMe = !other;
-  const level = isMe ? progressionFromXp(profile.xp).level : levelFrom(other!.id);
-  const progress = progressionFromXp(profile.xp);
-  const title = titleForLevel(level);
 
-  // Somebody else's percentages are derived from their feed score so the
-  // numbers on their card hang together instead of looking random.
-  const pcts: Record<CategoryId, number> = isMe
+  // Everything about somebody else is what is actually stored about them, or
+  // nothing at all.
+  //
+  // These used to be derived from a hash of their id — a feed score of
+  // `62 + hash % 34`, a level, a friend count, a reactions total — which
+  // rendered exactly like measurements. Once a database was connected those
+  // invented figures were being shown against real people's names. A person
+  // who has not played yet has no Feed Score, and the honest way to show that
+  // is an em dash.
+  const level = isMe
+    ? progressionFromXp(profile.xp).level
+    : other!.xp !== null ? progressionFromXp(other!.xp).level : null;
+  const progress = progressionFromXp(profile.xp);
+  const title = level !== null ? titleForLevel(level) : null;
+
+  const pcts: Record<CategoryId, number> | null = isMe
     ? percentages(profile.tallies)
-    : {
-        funny: clamp(scoreFrom(other!.id) + spread(other!.id, 0)),
-        chaotic: clamp(scoreFrom(other!.id) + spread(other!.id, 1)),
-        fire: clamp(scoreFrom(other!.id) + spread(other!.id, 2)),
-        wtf: clamp(scoreFrom(other!.id) + spread(other!.id, 3)),
-        good: clamp(scoreFrom(other!.id) + spread(other!.id, 4)),
-      };
-  const score = isMe ? feedScoreFrom(pcts) : scoreFrom(other!.id);
+    : other!.tallies ? percentages(other!.tallies) : null;
+  const score = pcts ? feedScoreFrom(pcts) : null;
   const vibes = isMe ? profile.vibes : other!.vibes;
   const tags = isMe ? profile.hashtags : other!.hashtags;
   const common = isMe ? [] : sharedTags(profile.hashtags, other!.hashtags);
 
-  const nextTitle = LEVEL_TITLES.find((t) => t.level > level);
+  const nextTitle = LEVEL_TITLES.find((t) => t.level > progress.level);
   // Both counts are whatever is actually stored. `followerCount` is maintained
   // by a database trigger on the follows table, so it reflects real follows;
   // the other person's following count is not something the client can know
   // without asking, and inventing one from their level would render exactly
   // like a real figure.
   const followerCount = isMe ? profile.followerCount : other!.followerCount;
+  // How many people someone else follows is not in the row the directory
+  // reads, so it is genuinely unknown rather than zero.
   const followingCount = isMe ? profile.following.length : null;
   const isFollowing = !isMe && profile.following.includes(other!.id);
 
@@ -122,9 +128,13 @@ export function ProfileScreen() {
             {other!.vibes.map((v) => VIBES[v].label).join(' · ')}
           </p>
         )}
-        <div className="profile__level-pill">
-          <span aria-hidden>{title.emoji}</span> LEVEL {level} · {title.title}
-        </div>
+        {/* No level is shown for someone who has never played, rather than a
+            level invented from their id. */}
+        {title !== null && level !== null && (
+          <div className="profile__level-pill">
+            <span aria-hidden>{title.emoji}</span> LEVEL {level} · {title.title}
+          </div>
+        )}
         {(isMe ? profile.premium : other!.premium) && (
           <div className="profile__premium-pill">👑 PREMIUM</div>
         )}
@@ -145,22 +155,30 @@ export function ProfileScreen() {
         </div>
       )}
 
-      <div className="profile__score">
-        <FeedScoreRing score={score} size={128} animate />
-        <div className="profile__cats">
-          {SCORE_CATEGORIES.map((c) => (
-            <div key={c.id} className="profile__cat">
-              <div className="row row--between">
-                <span className="profile__cat-label">{c.emoji} {c.label}</span>
-                <strong style={{ color: c.colour }}>{pcts[c.id]}%</strong>
+      {pcts !== null && score !== null ? (
+        <div className="profile__score">
+          <FeedScoreRing score={score} size={128} animate />
+          <div className="profile__cats">
+            {SCORE_CATEGORIES.map((c) => (
+              <div key={c.id} className="profile__cat">
+                <div className="row row--between">
+                  <span className="profile__cat-label">{c.emoji} {c.label}</span>
+                  <strong style={{ color: c.colour }}>{pcts[c.id]}%</strong>
+                </div>
+                <div className="meter" style={{ height: 7 }}>
+                  <div className="meter__fill" style={{ width: `${pcts[c.id]}%`, background: c.colour }} />
+                </div>
               </div>
-              <div className="meter" style={{ height: 7 }}>
-                <div className="meter__fill" style={{ width: `${pcts[c.id]}%`, background: c.colour }} />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        /* A Feed Score is earned by playing. Inventing one for someone who
+           has not played would render exactly like a real measurement. */
+        <div className="profile__score">
+          <p className="tiny">No Feed Score yet — @{isMe ? profile.handle : other!.handle} hasn’t played a round.</p>
+        </div>
+      )}
 
       <div className="profile__counts profile__counts--two">
         <button
@@ -206,17 +224,17 @@ export function ProfileScreen() {
       )}
 
       <div className="profile__stats">
-        <Stat emoji="❤️" value={isMe ? profile.profileLikes : other!.followerCount} label="Profile likes" />
+        <Stat emoji="❤️" value={isMe ? profile.profileLikes : other!.profileLikes} label="Profile likes" />
         <Stat
           emoji="👥"
-          value={isMe ? profile.friends.length : levelFrom(other!.id) * 2}
+          value={isMe ? profile.friends.length : null}
           label="Friends"
           onClick={isMe ? () => dispatch({ type: 'go', route: 'friends' }) : undefined}
         />
-        <Stat emoji="🎬" value={isMe ? profile.roundsScrolled : levelFrom(other!.id) * 4} label="Rounds scrolled" />
+        <Stat emoji="🎬" value={isMe ? profile.roundsScrolled : other!.roundsScrolled} label="Rounds scrolled" />
         <Stat
           emoji="✨"
-          value={isMe ? profile.reactionsReceived : levelFrom(other!.id) * 180}
+          value={isMe ? profile.reactionsReceived : other!.reactionsReceived}
           label="Reactions got"
         />
       </div>
@@ -323,7 +341,8 @@ export function ProfileScreen() {
 
 interface StatProps {
   emoji: string;
-  value: number;
+  /** null when the number is genuinely unknown; rendered as an em dash. */
+  value: number | null;
   label: string;
   /** Given a handler, the tile becomes the way into that thing. */
   onClick?: () => void;
@@ -333,7 +352,7 @@ function Stat({ emoji, value, label, onClick }: StatProps) {
   const content = (
     <>
       <span className="stat__emoji" aria-hidden>{emoji}</span>
-      <span className="stat__value">{value.toLocaleString()}</span>
+      <span className="stat__value">{value === null ? '—' : value.toLocaleString()}</span>
       <span className="stat__label">{label}</span>
     </>
   );
@@ -354,26 +373,7 @@ function Stat({ emoji, value, label, onClick }: StatProps) {
  * per person, and replaced the moment matches are recorded against real
  * accounts.
  */
-function levelFrom(id: string): number {
-  return 4 + (hash(id) % 44);
-}
 
-function scoreFrom(id: string): number {
-  return 62 + (hash(id) % 34);
-}
 
-function hash(seed: string): number {
-  let h = 0;
-  for (let n = 0; n < seed.length; n++) h = (h * 31 + seed.charCodeAt(n)) % 9973;
-  return h;
-}
 
-function spread(seed: string, i: number): number {
-  let h = 0;
-  for (let n = 0; n < seed.length; n++) h = (h * 31 + seed.charCodeAt(n)) % 997;
-  return ((h + i * 137) % 26) - 13;
-}
 
-function clamp(n: number): number {
-  return Math.max(20, Math.min(99, Math.round(n)));
-}

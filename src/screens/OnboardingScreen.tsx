@@ -191,7 +191,7 @@ export function OnboardingScreen() {
           </div>
 
           <div className="card">
-            <span className="eyebrow">WHERE YOU SCROLL FROM</span>
+            <span className="eyebrow">WHERE YOU SCROLLR FROM</span>
             <div className="auth__countries">
               {COUNTRIES.map((c) => (
                 <button

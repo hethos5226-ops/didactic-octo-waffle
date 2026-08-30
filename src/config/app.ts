@@ -10,7 +10,7 @@
 /** Shown in Settings. Kept in step with package.json by hand; it is one line. */
 export const APP_VERSION = '0.1.0';
 
-export const APP_NAME = 'SCROLL';
+export const APP_NAME = 'SCROLLR';
 
 /**
  * Official accounts.

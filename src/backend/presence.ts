@@ -3,7 +3,7 @@ import { supabase } from './client';
 /**
  * How many real people are here right now.
  *
- * SCROLL must never overstate this. A number invented to make a prototype look
+ * SCROLLR must never overstate this. A number invented to make a prototype look
  * busy is a lie told to the first person who trusts it, and it is the easiest
  * lie in the world to ship — a constant in a template renders identically to a
  * real count. So the rule is absolute: this returns what is actually true, or
@@ -29,7 +29,7 @@ export interface PresenceHandle {
 }
 
 /**
- * Subscribes to the live count of signed-in people with SCROLL open.
+ * Subscribes to the live count of signed-in people with SCROLLR open.
  *
  * `onCount` receives null until the count is actually known, so a caller can
  * tell "nobody is online" apart from "we have not found out yet" and show

@@ -69,9 +69,9 @@ else
   done
 
   psql -q -h "$TMPDIR_PG" -p 5433 -U postgres \
-    -c 'drop database if exists scroll_test' \
-    -c 'create database scroll_test' >/dev/null
-  PSQL=(psql -h "$TMPDIR_PG" -p 5433 -U postgres -d scroll_test)
+    -c 'drop database if exists scrollr_test' \
+    -c 'create database scrollr_test' >/dev/null
+  PSQL=(psql -h "$TMPDIR_PG" -p 5433 -U postgres -d scrollr_test)
 fi
 
 run() { "${PSQL[@]}" -q -v ON_ERROR_STOP=1 -f "$1" >/dev/null; }

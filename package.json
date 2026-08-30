@@ -1,16 +1,17 @@
 {
-  "name": "scroll",
+  "name": "scrollr",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "SCROLL \u2014 meet someone, watch their FYP, react together.",
+  "description": "SCROLLR \u2014 meet someone, watch their FYP, react together.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false --pretty",
     "check:backend": "node scripts/check-backend.mjs",
-    "test:rls": "./scripts/test-rls.sh"
+    "test:rls": "./scripts/test-rls.sh",
+    "check:privacy": "node scripts/check-no-third-party.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.112.4",

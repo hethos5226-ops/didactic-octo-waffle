@@ -15,7 +15,8 @@ import type {
 } from './types';
 import {
   currentAccount, fetchProfile, isBackendConfigured, markNotificationsRead,
-  onAuthChange, recordMatch, respondToRequest, saveProfile as saveProfileRemote,
+  onAuthChange, recordMatch, recordSessionResult, respondToRequest,
+  saveProfile as saveProfileRemote,
   sendFriendRequest, setFollowing, signOut as signOutRemote, uploadAvatar,
   type AuthAccount,
 } from '../backend';
@@ -102,7 +103,7 @@ export function newProfile(input: {
     friends: [],
     // A new account starts with an empty inbox, and that is what it shows.
     // There used to be two invented friend requests here so the bell had
-    // something in it — which meant SCROLL greeted every new person by
+    // something in it — which meant SCROLLR greeted every new person by
     // claiming two strangers had asked to be their friend. An empty inbox is
     // honest, and the first real request will mean something.
     incomingRequests: [],
@@ -155,7 +156,9 @@ function memberFromPerson(p: Person, team: 'yours' | 'theirs'): Member {
   return {
     id: p.id, handle: p.handle, avatar: p.avatar, photo: null, colour: p.colour,
     country: p.country, flag: p.flag, level: p.level, feedScore: p.feedScore,
-    vibes: p.vibes, hashtags: p.hashtags, premium: p.level >= 25,
+    // Not Premium. Nobody in the built-in cast bought a subscription, and a
+    // crown derived from a level is a badge that means nothing.
+    vibes: p.vibes, hashtags: p.hashtags, premium: false,
     isMe: false, team, ready: true,
   };
 }
@@ -831,7 +834,19 @@ function mirrorToBackend(action: Action, state: AppState) {
     case 'finishSession': {
       // The summary is built by the reducer, so read it back after the fact.
       const summary = state.session ? summariseMatch(state.session) : null;
-      if (summary) void recordMatch(selfId, summary);
+      if (summary) {
+        void recordMatch(selfId, summary);
+        // XP and the counters are server-owned, so they cannot ride along with
+        // the profile save — that write is held at the stored value by design.
+        // This is the increment the database will actually accept.
+        const rounds = state.session?.results.length ?? 0;
+        void recordSessionResult({
+          xp: summary.xpEarned,
+          rounds,
+          reactionsSent: state.session?.reactions.length ?? 0,
+          reactionsReceived: summary.totalReactions,
+        });
+      }
       break;
     }
     case 'signOut':

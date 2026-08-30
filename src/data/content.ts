@@ -2,7 +2,7 @@
  * Small formatting helpers shared across the app.
  *
  * This file used to carry the Video/AudioTrack model for a solo reel feed.
- * That feature is gone — SCROLL is a game played by watching someone else's
+ * That feature is gone — SCROLLR is a game played by watching someone else's
  * feed, not a place to browse one — so only the number formatting survives.
  */
 

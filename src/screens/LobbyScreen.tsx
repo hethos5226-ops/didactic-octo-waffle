@@ -50,7 +50,7 @@ export function LobbyScreen() {
   }, [copied]);
 
   const copyInvite = async () => {
-    const link = `https://scroll.app/j/${session.code}`;
+    const link = `https://scrollr.app/j/${session.code}`;
     try {
       await navigator.clipboard.writeText(link);
     } catch {
@@ -82,7 +82,7 @@ export function LobbyScreen() {
           <button className="btn btn--zap btn--block" onClick={copyInvite}>
             {copied ? '✅ Link copied!' : '🔗 Copy invite link'}
           </button>
-          <p className="tiny invite__link">scroll.app/j/{session.code}</p>
+          <p className="tiny invite__link">scrollr.app/j/{session.code}</p>
         </div>
       )}
 

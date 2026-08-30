@@ -1,4 +1,4 @@
--- SCROLL — server-owned columns, entitlements, and real like counts
+-- SCROLLR — server-owned columns, entitlements, and real like counts
 --
 -- 0001 got ownership right for rows: you cannot write a row that belongs to
 -- someone else. What it did not do is protect *columns* inside a row you do

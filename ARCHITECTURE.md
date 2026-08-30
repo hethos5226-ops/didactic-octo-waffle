@@ -1,8 +1,8 @@
-# SCROLL — architecture
+# SCROLLR — architecture
 
-What SCROLL is, how it is put together, and which parts are real.
+What SCROLLR is, how it is put together, and which parts are real.
 
-SCROLL is a social experience: people watch short-form video together and react
+SCROLLR is a social experience: people watch short-form video together and react
 to it. It is not a video creation app, not a video host, and not another
 TikTok or Instagram. **The shared viewing is the product. The video is only the
 thing being watched.** Almost every decision below follows from that sentence.
@@ -33,7 +33,7 @@ Supabase
 
 There is no application server, and that is deliberate rather than a stage to
 grow out of. A server would be a fixed monthly cost at every scale, including
-zero users. Supabase's free tier plus a static site means SCROLL currently
+zero users. Supabase's free tier plus a static site means SCROLLR currently
 costs nothing to run, and the parts that would eventually cost money are the
 parts that only activate under real load — see [SCALING.md](SCALING.md).
 
@@ -73,8 +73,10 @@ dishonest ones a no-op.
 **Tested, not assumed.** `supabase/tests/` runs the real migrations against a
 real PostgreSQL and executes the attacks: forging requests, accepting other
 people's friend requests, granting yourself Premium, reading other people's
-notifications, uploading into someone else's avatar folder. 86 assertions, run
-on every push by `.github/workflows/ci.yml`. Reading a policy tells you what
+notifications, uploading into someone else's avatar folder, inventing
+notifications, overfilling lobbies, fabricating rounds. Every vulnerability
+found in the audit has a test that reproduces it, run on every push by
+`.github/workflows/ci.yml`. Reading a policy tells you what
 its author intended; running it tells you what the database does.
 
 **Later.** Server-authoritative sessions. `apply_session_result` stops the
@@ -107,15 +109,26 @@ nothing extra.
 `video_sources`, `video_refs`, `lobby_rounds`, `blocks`, `reports`,
 `deletion_requests`, and `delete_my_account`.
 
+**Now — `0005_audit_fixes.sql`**
+The pre-pause audit, which found seven real problems by executing attacks
+rather than reading policies: `blocked_between` answered questions about two
+strangers, disclosing private blocks; `touch_lobby_presence` let anyone extend
+any lobby's life; lobbies had no capacity at all (a 1v1 lobby took three
+players and 24 bots); a host could attribute a round to someone who was never
+present; notifications could be invented and flooded; reports and match history
+grew without limit. It also fixed a regression `0002` had introduced — XP was
+server-owned but nothing called the sanctioned write path, so no player's
+progress persisted.
+
 ---
 
 ## Real people, bots, and counting
 
-This is the part of SCROLL most worth getting right, because the failure mode
+This is the part of SCROLLR most worth getting right, because the failure mode
 is so easy and so tempting: a constant in a template renders exactly like a
 measurement.
 
-**The rule.** SCROLL never displays a number that is not true. If nobody is
+**The rule.** SCROLLR never displays a number that is not true. If nobody is
 online it shows zero. If four people are online it shows four. Bots are never
 included.
 
@@ -147,6 +160,62 @@ the whole message, because publishing handles would turn a headcount into a
 fabricated friend requests handed to every new account; follower counts derived
 from a level (`4_200 + level * 1_137`); a following count of `180 + level * 3`.
 
+And, found in the final pass, an entire fabricated statistics layer on the
+profile screen. Viewing anyone else invented their Feed Score
+(`62 + hash(id) % 34`), their per-category breakdown, their level, their friend
+count, their rounds scrolled and their reactions received — all from a hash of
+their id, all rendering exactly like measurements. Once a database was
+connected these were being shown against **real people's names**. The row the
+directory reads already contained the true values; `rowToDirectoryPerson` was
+simply discarding them. It now carries them, and where a number is genuinely
+unknown the UI shows an em dash and says "no Feed Score yet" rather than
+inventing one. A crown that appeared on any simulated co-viewer above level 25
+went too — nobody in the built-in cast bought a subscription.
+
+### The name
+
+The project was renamed from **SCROLL** to **SCROLLR** on 30 August 2026.
+Everything a person can see says SCROLLR: the wordmark, the page title, every
+document, every string in the app.
+
+Four internal identifiers deliberately still read `scroll`, because renaming
+them costs something and gains nothing visible:
+
+| Identifier | Why it stayed |
+|---|---|
+| `scroll.account.v1`, `scroll.profile.v1` | Browser storage keys. Changing them orphans the local profile on every device that already has one — a silent data loss for no benefit. |
+| `scroll.server_write` | The transaction-local flag the column guard reads. It is referenced across three migrations; missing one occurrence would silently stop counters updating, and nobody would notice until the numbers were wrong. |
+| `video_sources.id = 'scroll'` | A primary key that may already exist in the deployed database. Its display name is "SCROLLR-hosted"; the key is invisible. |
+| `VideoSourceId = 'scroll'` | Must match the database key above. |
+
+If any of these is ever renamed, do it as a deliberate migration rather than a
+find-and-replace — particularly `scroll.server_write`, where a partial rename
+fails quietly.
+
+Note also that `scrolling`, `scroller`, `scrolled` and `rounds_scrolled` are the
+ordinary English verb and the name of a role in the game. They were never the
+brand and must not be renamed.
+
+### Known gaps, which are product decisions rather than bugs
+
+Two things remain honestly imperfect, and both need a decision rather than a
+guess:
+
+1. **In-session XP does not fully persist.** Session XP does (`0005` wired the
+   sanctioned increment) and so does social XP from real events (`0006` awards
+   it by trigger). What does not is the XP granted for liking or friending a
+   **simulated** co-viewer during a local session — those are not real people,
+   no row is written, and the server never hears. Local XP therefore drifts
+   slightly above the stored value and settles back on reload. Resolving it
+   means deciding whether interacting with a bot should earn real progression;
+   it disappears on its own once sessions are real.
+
+2. **Simulated co-viewers in a session are not labelled as bots.** The
+   database-backed roster carries `is_bot` and is honest everywhere it appears.
+   The local prototype session still renders the built-in cast as ordinary
+   people. Labelling them is a change to the session UI, which this pass was
+   asked not to touch. Worth doing before anyone outside the project plays it.
+
 ---
 
 ## Matchmaking
@@ -175,7 +244,7 @@ which keeps it free. `pg_cron` can take it over later without any caller
 changing.
 
 **Later.** Shared game state and synchronised playback over Realtime — priced
-per message with a free allowance, so it costs nothing while SCROLL is small,
+per message with a free allowance, so it costs nothing while SCROLLR is small,
 unlike a game server that costs the same at three players as at three thousand.
 
 ---
@@ -195,8 +264,8 @@ VideoRef (source + external id + rights)
 ```
 
 **Now.** `src/video/types.ts` and `src/video/sources.ts`, plus `video_sources`
-and `video_refs`. SCROLL stores a *reference* — where something lives, who
-published it, what SCROLL may do with it — never the bytes. `sample` is the
+and `video_refs`. SCROLLR stores a *reference* — where something lives, who
+published it, what SCROLLR may do with it — never the bytes. `sample` is the
 only enabled source: the generated cards the prototype already plays.
 
 **Prepared, off.** `youtube` (embed permitted, adapter not built — the most
@@ -208,7 +277,7 @@ a monthly bill).
 what is permitted, and the player cannot embed something marked `link_only` by
 accident.
 
-This is what keeps SCROLL independent. A platform that becomes available is a
+This is what keeps SCROLLR independent. A platform that becomes available is a
 new adapter; one that disappears is a source switched off, with sessions,
 scores and history unaffected. See [FUTURE_FEATURES.md](FUTURE_FEATURES.md) for
 what each platform actually permits — the short version is that **no platform
