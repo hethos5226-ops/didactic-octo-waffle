@@ -1,0 +1,89 @@
+# Checks that run on every push.
+#
+# These exist because the alternative is checking by hand, and the person who
+# has to check by hand cannot always open a terminal. Everything here runs on
+# GitHub's own infrastructure and reports in the browser: free for a public
+# repository, and free of any always-on service.
+#
+# The row-level security suite is the important one. PostgREST puts the
+# database on the public internet, so a policy is the only thing between a
+# crafted request and the data — and a policy that is merely *read* and assumed
+# correct has never actually been checked. This runs the real migrations
+# against a real PostgreSQL and tries the attacks.
+name: CI
+
+on:
+  push:
+    branches: [main, 'claude/**']
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Typecheck and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Deliberately built with no Supabase variables: this proves the app
+      # still builds and runs device-locally, which is the mode anyone gets
+      # when they clone it without a project.
+      - run: npm run build
+
+      # A secret must never reach the bundle, whatever produced it.
+      - run: node scripts/guard-build-env.mjs --scan-dist
+
+  rls:
+    name: Row-level security
+    runs-on: ubuntu-latest
+
+    # A throwaway database for the length of the job. Nothing here can reach
+    # the real Supabase project, which is the point: these tests are
+    # destructive by design.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: scroll_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install psql
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Run the policy tests
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/scroll_test
+        run: ./scripts/test-rls.sh
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Catches a privileged key committed to the repository itself, which the
+      # build-time guard would never see because it only looks at what the
+      # build emitted. Not a grep: a pattern broad enough to catch a key also
+      # matches this project's own documentation about keys.
+      - name: Look for privileged keys in the repository
+        run: node scripts/scan-secrets.mjs
+
+      - name: Check .env.local is ignored
+        run: |
+          printf 'VITE_SUPABASE_ANON_KEY=test\n' > .env.local
+          if git check-ignore -q .env.local; then
+            echo ".env.local is ignored."
+          else
+            echo "::error::.env.local is NOT gitignored — a real key could be committed."
+            exit 1
+          fi

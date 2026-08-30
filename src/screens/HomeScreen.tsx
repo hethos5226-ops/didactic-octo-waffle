@@ -3,6 +3,7 @@ import { feedScoreFrom, percentages } from '../state/scoring';
 import { useStore } from '../state/store';
 import { Avatar } from '../components/Avatar';
 import { AdSlot } from '../components/AdSlot';
+import { useOnlineCount } from '../hooks/useOnlineCount';
 import type { GroupSize } from '../state/types';
 
 const MODES: { size: GroupSize; emoji: string; label: string; hint: string }[] = [
@@ -17,6 +18,10 @@ export function HomeScreen() {
   const progress = progressionFromXp(profile.xp);
   const title = titleForLevel(progress.level);
   const score = feedScoreFrom(percentages(profile.tallies));
+  // Real people with SCROLL open, or null while that is unknown. Never a
+  // decorative number: an invented count is a lie told to the first person
+  // who believes it, and zero is a perfectly honest thing to show.
+  const online = useOnlineCount(profile.id);
 
   return (
     <div className="screen home">
@@ -67,10 +72,13 @@ export function HomeScreen() {
           ))}
         </div>
 
-        <div className="home__online">
-          <span className="home__online-dot" />
-          <strong>12,480</strong> people scrolling right now
-        </div>
+        {online !== null && (
+          <div className="home__online">
+            <span className="home__online-dot" />
+            <strong>{online.toLocaleString()}</strong>
+            {online === 1 ? ' person scrolling right now' : ' people scrolling right now'}
+          </div>
+        )}
       </section>
 
       <section className="home__private">
