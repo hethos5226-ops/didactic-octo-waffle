@@ -151,7 +151,10 @@ const TERMS = [
 ];
 
 const PRIVACY = [
-  'This build stores everything on your device. Your account, profile, photo and activity live in this browser’s local storage and are never uploaded, because there is no server to upload them to.',
+  'SCROLL collects the least it can. There is no behavioural tracking, no advertising profile, no analytics product, no contact upload and no location collection.',
+  'When SCROLL is connected to its database, your account holds your email address so you can sign in, your handle and profile, who you are friends with, who you follow, your notifications and a summary of matches you have played. Nothing about what you watch is kept.',
+  'Your profile photo is cropped and shrunk on your device before it is uploaded, so the original never leaves your phone.',
+  'You can delete your account from Settings at any time, which removes your profile, photo, friends, follows, notifications and match history.',
   'Sign in with Apple and Google are not connected yet, so no data is shared with either.',
-  'A real release needs to say much more: how a shared screen is handled, how voice is transmitted, retention, processors, deletion requests and abuse reporting. This page is a placeholder, not a policy.',
+  'This describes what the code does today rather than being reviewed legal copy. A public launch needs a policy written properly.',
 ];

@@ -100,12 +100,14 @@ export function newProfile(input: {
     tallies: emptyTallies(),
     profileLikes: 0,
     friends: [],
-    // A brand-new account with an empty inbox cannot show what the bell is
-    // for, so two people are already waiting. In a real build these arrive
-    // from the server.
-    ...seedSocial(),
-    // A brand-new account follows nobody. The follower count is simulated
-    // because there is no server to count anything.
+    // A new account starts with an empty inbox, and that is what it shows.
+    // There used to be two invented friend requests here so the bell had
+    // something in it — which meant SCROLL greeted every new person by
+    // claiming two strangers had asked to be their friend. An empty inbox is
+    // honest, and the first real request will mean something.
+    incomingRequests: [],
+    sentRequests: [],
+    notifications: [],
     following: [],
     followerCount: 0,
     matchHistory: [],
@@ -119,15 +121,6 @@ export function newProfile(input: {
 }
 
 let notificationId = 0;
-
-function seedSocial(): Pick<Profile, 'incomingRequests' | 'sentRequests' | 'notifications'> {
-  const asking = shuffled(PEOPLE.map((p) => p.id)).slice(0, 2);
-  return {
-    incomingRequests: asking,
-    sentRequests: [],
-    notifications: asking.map((id) => notify('request', id)),
-  };
-}
 
 function notify(kind: AppNotification['kind'], fromId: string): AppNotification {
   return { id: ++notificationId, kind, fromId, at: Date.now(), read: false };
@@ -739,12 +732,26 @@ function reducer(state: AppState, action: Action): AppState {
 
     case 'buyPremium': {
       if (!state.profile) return state;
+      // A local preview of the Premium interface, and nothing more.
+      //
+      // No payment provider is connected, and the database will not accept
+      // this: `profiles.premium` is server-owned, mirrored from the
+      // `entitlements` table, and a write from the client is coerced back to
+      // the stored value. So this flag lives until the next reload, at which
+      // point the real entitlement reasserts itself.
+      //
+      // That is the correct behaviour rather than a shortcoming. Premium has
+      // to be a fact a billing system determined — see FUTURE_FEATURES.md for
+      // how App Store and Play Store receipts will write it.
+      const previewOnly = isBackendConfigured();
       return {
         ...state,
         profile: { ...state.profile, premium: true },
         route: state.history[state.history.length - 1] ?? 'home',
         history: state.history.slice(0, -1),
-        toast: toast('👑', 'Premium unlocked — no more ads!'),
+        toast: previewOnly
+          ? toast('👑', 'Premium preview — payments are not connected yet')
+          : toast('👑', 'Premium unlocked — no more ads!'),
       };
     }
 

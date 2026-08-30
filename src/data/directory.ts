@@ -36,8 +36,11 @@ export function personToDirectory(p: Person): DirectoryPerson {
     flag: p.flag,
     hashtags: p.hashtags,
     vibes: p.vibes,
-    followerCount: 4_200 + p.level * 1_137,
-    premium: p.level >= 25,
+    // Zero, not a formula. The built-in cast are not real accounts and have
+    // no real followers; a number derived from their level would look exactly
+    // like a measurement and be entirely made up.
+    followerCount: 0,
+    premium: false,
   };
 }
 

@@ -63,10 +63,13 @@ export function ProfileScreen() {
   const common = isMe ? [] : sharedTags(profile.hashtags, other!.hashtags);
 
   const nextTitle = LEVEL_TITLES.find((t) => t.level > level);
-  // Followers are simulated for other people (there is no server to count
-  // them) and start at zero for you, which is honest for a new account.
+  // Both counts are whatever is actually stored. `followerCount` is maintained
+  // by a database trigger on the follows table, so it reflects real follows;
+  // the other person's following count is not something the client can know
+  // without asking, and inventing one from their level would render exactly
+  // like a real figure.
   const followerCount = isMe ? profile.followerCount : other!.followerCount;
-  const followingCount = isMe ? profile.following.length : 180 + levelFrom(other!.id) * 3;
+  const followingCount = isMe ? profile.following.length : null;
   const isFollowing = !isMe && profile.following.includes(other!.id);
 
   // Somebody else's profile is the natural place to act on them.
