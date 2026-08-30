@@ -73,8 +73,10 @@ dishonest ones a no-op.
 **Tested, not assumed.** `supabase/tests/` runs the real migrations against a
 real PostgreSQL and executes the attacks: forging requests, accepting other
 people's friend requests, granting yourself Premium, reading other people's
-notifications, uploading into someone else's avatar folder. 86 assertions, run
-on every push by `.github/workflows/ci.yml`. Reading a policy tells you what
+notifications, uploading into someone else's avatar folder, inventing
+notifications, overfilling lobbies, fabricating rounds. Every vulnerability
+found in the audit has a test that reproduces it, run on every push by
+`.github/workflows/ci.yml`. Reading a policy tells you what
 its author intended; running it tells you what the database does.
 
 **Later.** Server-authoritative sessions. `apply_session_result` stops the
@@ -106,6 +108,17 @@ nothing extra.
 **Now — `0004_video_moderation_and_deletion.sql`**
 `video_sources`, `video_refs`, `lobby_rounds`, `blocks`, `reports`,
 `deletion_requests`, and `delete_my_account`.
+
+**Now — `0005_audit_fixes.sql`**
+The pre-pause audit, which found seven real problems by executing attacks
+rather than reading policies: `blocked_between` answered questions about two
+strangers, disclosing private blocks; `touch_lobby_presence` let anyone extend
+any lobby's life; lobbies had no capacity at all (a 1v1 lobby took three
+players and 24 bots); a host could attribute a round to someone who was never
+present; notifications could be invented and flooded; reports and match history
+grew without limit. It also fixed a regression `0002` had introduced — XP was
+server-owned but nothing called the sanctioned write path, so no player's
+progress persisted.
 
 ---
 

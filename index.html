@@ -18,13 +18,32 @@
     />
     <title>SCROLL — watch someone else's FYP</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
     <style>
+      /*
+       * Outfit, self-hosted.
+       *
+       * This used to be a <link> to fonts.googleapis.com, which meant every
+       * visitor's IP address, User-Agent and Referer were sent to Google on
+       * every page load, before any consent and for no benefit to the person
+       * visiting. That is a third-party disclosure SCROLL's privacy policy
+       * says does not happen, so it had to be the policy or the font tag that
+       * changed — and the font tag was the one that was wrong.
+       *
+       * One variable file (32 kB, weight axis 100-900) covers every weight the
+       * UI uses, so the typeface is unchanged. Licensed under the SIL Open
+       * Font License 1.1; see public/fonts/OFL.txt.
+       *
+       * The path is relative so it survives a GitHub Pages project deploy,
+       * which serves the site from /<repo>/ rather than the domain root.
+       */
+      @font-face {
+        font-family: 'Outfit';
+        font-style: normal;
+        font-weight: 100 900;
+        font-display: swap;
+        src: url('./fonts/outfit-variable.woff2') format('woff2-variations');
+      }
+
       /* Inline: the stylesheet lives in the JS bundle, so when that fails to
          load these are the only styles the page has. */
       html, body { margin: 0; height: 100%; background: #0a0616; color: #fff; }

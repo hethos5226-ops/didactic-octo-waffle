@@ -15,7 +15,8 @@ import type {
 } from './types';
 import {
   currentAccount, fetchProfile, isBackendConfigured, markNotificationsRead,
-  onAuthChange, recordMatch, respondToRequest, saveProfile as saveProfileRemote,
+  onAuthChange, recordMatch, recordSessionResult, respondToRequest,
+  saveProfile as saveProfileRemote,
   sendFriendRequest, setFollowing, signOut as signOutRemote, uploadAvatar,
   type AuthAccount,
 } from '../backend';
@@ -831,7 +832,19 @@ function mirrorToBackend(action: Action, state: AppState) {
     case 'finishSession': {
       // The summary is built by the reducer, so read it back after the fact.
       const summary = state.session ? summariseMatch(state.session) : null;
-      if (summary) void recordMatch(selfId, summary);
+      if (summary) {
+        void recordMatch(selfId, summary);
+        // XP and the counters are server-owned, so they cannot ride along with
+        // the profile save — that write is held at the stored value by design.
+        // This is the increment the database will actually accept.
+        const rounds = state.session?.results.length ?? 0;
+        void recordSessionResult({
+          xp: summary.xpEarned,
+          rounds,
+          reactionsSent: state.session?.reactions.length ?? 0,
+          reactionsReceived: summary.totalReactions,
+        });
+      }
       break;
     }
     case 'signOut':

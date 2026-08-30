@@ -645,3 +645,260 @@ select tests.check(
 select tests.check(
   (select count(*) from public.deletion_requests where user_id = :mallory) = 1,
   'the auth record removal is queued for the service role');
+
+do $$ begin raise notice ''; raise notice '── audit fixes: authorisation ──'; end $$;
+
+-- Each case below reproduces a probe from the pre-pause audit that succeeded
+-- against 0004 and must now fail.
+
+-- The deletion section above removed mallory's profile, so this section
+-- rebuilds the cast it needs. The auth.users row survived deletion by design
+-- (see 0004), which is why only the profile is recreated.
+insert into public.profiles (id, handle, display_name)
+values (:mallory, 'mallory2nd', 'Mallory') on conflict (id) do nothing;
+
+-- A private block between two people who are both strangers to the caller.
+insert into public.blocks (blocker_id, blocked_id) values (:alice, :bob)
+  on conflict do nothing;
+select tests.check(
+  tests.truth('select public.blocked_between('
+    || quote_literal(:alice) || ',' || quote_literal(:bob) || ')::text') = 'false',
+  'blocked_between does not answer about two other people');
+
+do $$
+declare answered boolean;
+begin
+  perform set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
+  set local role authenticated;
+  answered := public.blocked_between(
+    '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222');
+  reset role;
+  perform tests.check(answered, 'but it still answers about yourself');
+end $$;
+
+-- A stranger must not be able to keep somebody else's lobby alive.
+insert into public.lobbies (id, host_id, mode, group_size, expires_at, status)
+values ('cccccccc-0000-0000-0000-00000000cccc', :alice, 'random', 1,
+        now() + interval '1 minute', 'open');
+
+do $$
+declare before_ts timestamptz; after_ts timestamptz;
+begin
+  select expires_at into before_ts from public.lobbies
+   where id = 'cccccccc-0000-0000-0000-00000000cccc';
+  perform set_config('request.jwt.claim.sub', '33333333-3333-3333-3333-333333333333', true);
+  set local role authenticated;
+  perform public.touch_lobby_presence('cccccccc-0000-0000-0000-00000000cccc');
+  reset role;
+  select expires_at into after_ts from public.lobbies
+   where id = 'cccccccc-0000-0000-0000-00000000cccc';
+  perform tests.check(after_ts = before_ts,
+    'a non-member cannot extend a lobby''s life');
+end $$;
+
+do $$ begin raise notice ''; raise notice '── audit fixes: capacity and cost ──'; end $$;
+
+-- Earlier sections left people seated, and one live seat per person is
+-- enforced, so this section starts by standing everyone up.
+update public.lobby_members set left_at = now() where left_at is null;
+
+-- group_size 1 means 1v1, so two seats. A third must be refused.
+insert into public.lobbies (id, host_id, mode, group_size, status)
+values ('dddddddd-0000-0000-0000-00000000dddd', :alice, 'random', 1, 'open');
+
+select tests.check(
+  tests.allowed('insert into public.lobby_members (lobby_id, user_id) values ('
+    || '''dddddddd-0000-0000-0000-00000000dddd'', ' || quote_literal(:alice) || ')', :alice),
+  'the first player takes a seat');
+
+select tests.check(
+  tests.allowed('insert into public.lobby_members (lobby_id, user_id) values ('
+    || '''dddddddd-0000-0000-0000-00000000dddd'', ' || quote_literal(:bob) || ')', :bob),
+  'the second player takes the last seat');
+
+select tests.check(
+  tests.denied('insert into public.lobby_members (lobby_id, user_id) values ('
+    || '''dddddddd-0000-0000-0000-00000000dddd'', ' || quote_literal(:mallory) || ')', :mallory),
+  'a third player is refused — the lobby is full');
+
+-- Bots fill what is left and never more, however often the host asks.
+insert into public.lobbies (id, host_id, mode, group_size, status)
+values ('eeeeeeee-0000-0000-0000-00000000eeee', :alice, 'random', 3, 'open');
+
+do $$
+declare total integer;
+begin
+  perform set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
+  set local role authenticated;
+  perform public.fill_lobby_with_bots('eeeeeeee-0000-0000-0000-00000000eeee', 8);
+  perform public.fill_lobby_with_bots('eeeeeeee-0000-0000-0000-00000000eeee', 8);
+  perform public.fill_lobby_with_bots('eeeeeeee-0000-0000-0000-00000000eeee', 8);
+  reset role;
+  select count(*) into total from public.lobby_members
+   where lobby_id = 'eeeeeeee-0000-0000-0000-00000000eeee' and left_at is null;
+  perform tests.check(total = 6,
+    'repeated bot filling stops at capacity (3v3 = 6), not 24');
+end $$;
+
+-- Match history is bounded, so one client cannot grow the database forever.
+do $$
+declare kept integer;
+begin
+  perform set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
+  set local role authenticated;
+  insert into public.matches (user_id, mode)
+  select '22222222-2222-2222-2222-222222222222', 'random' from generate_series(1, 120);
+  reset role;
+  select count(*) into kept from public.matches
+   where user_id = '22222222-2222-2222-2222-222222222222';
+  perform tests.check(kept = 50, 'match history is capped at 50 rows per user');
+end $$;
+
+-- Identical open reports collapse into one. (The earlier report about mallory
+-- cascaded away when that account was deleted, so this files a fresh one.)
+select tests.check(
+  tests.allowed(
+    'insert into public.reports (reporter_id, subject_user_id, reason) values ('
+      || quote_literal(:bob) || ', ' || quote_literal(:mallory) || ', ''harassment'')',
+    :bob),
+  'a first report is accepted');
+
+select tests.check(
+  tests.denied(
+    'insert into public.reports (reporter_id, subject_user_id, reason) values ('
+      || quote_literal(:bob) || ', ' || quote_literal(:mallory) || ', ''harassment'')',
+    :bob),
+  'a duplicate open report is refused');
+
+do $$ begin raise notice ''; raise notice '── audit fixes: fabricated activity ──'; end $$;
+
+-- A host cannot manufacture a round against someone who was never present.
+select tests.check(
+  tests.denied(
+    'insert into public.lobby_rounds (lobby_id, round_index, scroller_user_id, feed_score) '
+      || 'values (''dddddddd-0000-0000-0000-00000000dddd'', 0, '
+      || quote_literal(:mallory) || ', 100)',
+    :alice),
+  'cannot attribute a round to someone who was never in the lobby');
+
+select tests.check(
+  tests.allowed(
+    'insert into public.lobby_rounds (lobby_id, round_index, scroller_user_id, feed_score) '
+      || 'values (''dddddddd-0000-0000-0000-00000000dddd'', 1, '
+      || quote_literal(:bob) || ', 80)',
+    :alice),
+  'but a real participant''s round records fine');
+
+-- Notifications can no longer be asserted by a client at all.
+select tests.check(
+  tests.denied(
+    'insert into public.notifications (user_id, actor_id, kind) values ('
+      || quote_literal(:bob) || ', ' || quote_literal(:mallory) || ', ''accepted'')',
+    :mallory),
+  'cannot invent an "accepted" notification');
+
+select tests.check(
+  tests.denied(
+    'insert into public.notifications (user_id, actor_id, kind) '
+      || 'select ' || quote_literal(:bob) || ', ' || quote_literal(:mallory)
+      || ', ''liked'' from generate_series(1,100)',
+    :mallory),
+  'cannot flood an inbox');
+
+-- They arrive from the real event instead.
+do $$
+declare before_n integer; after_n integer;
+begin
+  select count(*) into before_n from public.notifications
+   where user_id = '33333333-3333-3333-3333-333333333333';
+  perform set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
+  set local role authenticated;
+  insert into public.profile_likes (liker_id, liked_id)
+  values ('22222222-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333');
+  reset role;
+  select count(*) into after_n from public.notifications
+   where user_id = '33333333-3333-3333-3333-333333333333';
+  perform tests.check(after_n = before_n + 1,
+    'a real like generates exactly one notification, server-side');
+end $$;
+
+do $$ begin raise notice ''; raise notice '── audit fixes: anonymous exposure ──'; end $$;
+
+select tests.check(
+  tests.anon_denied('update public.lobbies set status = ''abandoned'''),
+  'anonymous cannot touch lobbies');
+
+do $$
+declare visible integer;
+begin
+  perform set_config('request.jwt.claim.sub', '', true);
+  set local role anon;
+  select count(*) into visible from public.lobbies;
+  reset role;
+  perform tests.check(visible = 0, 'a signed-out visitor cannot enumerate lobbies');
+end $$;
+
+do $$ begin raise notice ''; raise notice '── session results: the sanctioned write path ──'; end $$;
+
+-- Making XP server-owned in 0002 closed a real hole and opened a quiet
+-- regression: the app wrote XP through the whole-row profile save, which is
+-- held at the stored value, so nothing persisted and a player's level reset on
+-- every reload. These assert both halves — the escalation stays shut, and the
+-- honest increment lands.
+
+do $$
+declare before_xp integer; after_xp integer; plays integer;
+begin
+  select xp into before_xp from public.profiles where id = '11111111-1111-1111-1111-111111111111';
+  perform set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
+  set local role authenticated;
+  perform public.apply_session_result(120, 4, 30, 25);
+  reset role;
+  select xp, sessions_played into after_xp, plays
+    from public.profiles where id = '11111111-1111-1111-1111-111111111111';
+  perform tests.check(after_xp = before_xp + 120, 'a finished session actually awards XP');
+  perform tests.check(plays > 0, 'and counts the session played');
+end $$;
+
+-- The cap is what stops the increment becoming a set.
+do $$
+declare ok boolean := false;
+begin
+  perform set_config('request.jwt.claim.sub', '11111111-1111-1111-1111-111111111111', true);
+  set local role authenticated;
+  begin
+    perform public.apply_session_result(999999, 0, 0, 0);
+    reset role;
+  exception when others then
+    reset role;
+    ok := true;
+  end;
+  perform tests.check(ok, 'an implausible XP claim is refused outright');
+end $$;
+
+-- And it only ever applies to the caller.
+do $$
+declare bob_xp integer;
+begin
+  perform set_config('request.jwt.claim.sub', '22222222-2222-2222-2222-222222222222', true);
+  set local role authenticated;
+  perform public.apply_session_result(100, 1, 1, 1);
+  reset role;
+  select xp into bob_xp from public.profiles where id = '22222222-2222-2222-2222-222222222222';
+  perform tests.check(bob_xp = 100, 'the increment lands on the caller, not on anyone else');
+end $$;
+
+do $$
+declare anon_blocked boolean := false;
+begin
+  perform set_config('request.jwt.claim.sub', '', true);
+  set local role anon;
+  begin
+    perform public.apply_session_result(100, 1, 1, 1);
+    reset role;
+  exception when others then
+    reset role;
+    anon_blocked := true;
+  end;
+  perform tests.check(anon_blocked, 'a signed-out caller earns nothing');
+end $$;

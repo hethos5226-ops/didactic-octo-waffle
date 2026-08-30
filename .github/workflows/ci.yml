@@ -37,6 +37,10 @@ jobs:
       # A secret must never reach the bundle, whatever produced it.
       - run: node scripts/guard-build-env.mjs --scan-dist
 
+      # And neither must a third-party host. SCROLL's privacy policy promises
+      # no external requests; this is what makes that promise checkable.
+      - run: node scripts/check-no-third-party.mjs
+
   rls:
     name: Row-level security
     runs-on: ubuntu-latest

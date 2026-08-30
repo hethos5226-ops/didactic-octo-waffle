@@ -40,10 +40,11 @@ explicitly labelled as such and must be replaced.
 - [ ] **Under-13 (COPPA, US) / under-16 (GDPR, EU).** Both impose heavy
       obligations. Simplest defensible position for a small app: 13+ or 16+
       minimum with an age gate at sign-up.
-- [ ] **Australia's under-16 social media restrictions.** Legislation in this
-      area is live and changing. SCROLL — strangers matched together, live
-      reactions — is plausibly in scope. **Check the current position before
-      launch; this is a lawyer question.**
+- [ ] **Australia's under-16 social media restrictions are now in force**
+      (10 December 2025). Whether SCROLL is caught turns on the gaming
+      exclusion versus its social features, and it is genuinely ambiguous.
+      Researched with sources in [LEGAL_AUSTRALIA.md](LEGAL_AUSTRALIA.md) —
+      read that first; it is the highest-stakes open question in the project.
 - [ ] **Age rating** for both stores. Strangers + user content + chat pushes
       the rating up regardless of intent.
 

@@ -237,14 +237,21 @@ async function fetchMatches(selfId: string): Promise<MatchSummary[]> {
 
 // ── Writes ────────────────────────────────────────────────────────────────
 
+/**
+ * Notifications are no longer written from here.
+ *
+ * They used to be inserted alongside the event, which meant a client could
+ * assert an event that never happened — "I accepted your friend request" to
+ * someone who never sent one — and could do it without limit. A database
+ * trigger now generates each notification from the real row, so forging one
+ * requires performing the real thing first, and the real things are bounded by
+ * their own unique constraints. See 0005_audit_fixes.sql.
+ */
 export async function sendFriendRequest(selfId: string, targetId: string): Promise<void> {
   await supabase()?.from('friend_requests').upsert(
     { requester_id: selfId, addressee_id: targetId, status: 'pending' },
     { onConflict: 'requester_id,addressee_id' },
   );
-  await supabase()?.from('notifications').insert({
-    user_id: targetId, actor_id: selfId, kind: 'request',
-  });
 }
 
 export async function respondToRequest(
@@ -259,11 +266,6 @@ export async function respondToRequest(
     .update({ status: accept ? 'accepted' : 'declined', responded_at: new Date().toISOString() })
     .eq('requester_id', requesterId)
     .eq('addressee_id', selfId);
-  if (accept) {
-    await client.from('notifications').insert({
-      user_id: requesterId, actor_id: selfId, kind: 'accepted',
-    });
-  }
 }
 
 export async function setFollowing(selfId: string, targetId: string, follow: boolean): Promise<void> {
@@ -296,3 +298,36 @@ export async function recordMatch(selfId: string, match: MatchSummary): Promise<
 }
 
 export type { DirectoryPerson };
+
+/**
+ * Records what a finished session earned.
+ *
+ * XP and the play counters are server-owned — a client that can write its own
+ * XP can write any XP — so they do not travel with `saveProfile`, which sends
+ * the whole profile row and has those columns held at their stored values.
+ * This is the sanctioned path: an increment, applied to the caller, capped
+ * server-side at more than a real session could produce.
+ *
+ * Without this the guard introduced in 0002 would silently discard every XP
+ * gain, and a signed-in player's level would reset on every reload. That is
+ * exactly what happened, and it is why the regression test in
+ * supabase/tests/rls_test.sql asserts the increment lands.
+ */
+export async function recordSessionResult(result: {
+  xp: number;
+  rounds: number;
+  reactionsSent: number;
+  reactionsReceived: number;
+}): Promise<void> {
+  const client = supabase();
+  if (!client) return;
+  // Clamped here too, so a bug in the caller becomes a smaller number rather
+  // than a rejected call that loses the whole session.
+  const clamp = (n: number, max: number) => Math.max(0, Math.min(Math.round(n), max));
+  await client.rpc('apply_session_result', {
+    p_xp: clamp(result.xp, 2000),
+    p_rounds: clamp(result.rounds, 50),
+    p_reactions_sent: clamp(result.reactionsSent, 500),
+    p_reactions_received: clamp(result.reactionsReceived, 500),
+  });
+}
